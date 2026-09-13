@@ -1,0 +1,286 @@
+import { NextRequest } from 'next/server';
+import { z } from 'zod';
+import { createAdminClient } from '@/lib/db/supabase-admin';
+import { mockStore } from '@/lib/db/mock-store';
+import { getStorageConfig, ProductionDatabaseError } from '@/lib/db/storage-config';
+import { analyzeCivicIssue, GeminiConfigurationError } from '@/lib/ai/gemini';
+import { generateTextEmbedding, buildNormalizedEmbeddingText } from '@/lib/ai/embeddings';
+import { saveAIAnalysisMetadata, saveIncidentEmbedding } from '@/lib/ai/ai-persistence';
+import { calculatePriorityScore } from '@/lib/priority/priority-engine';
+import { findDuplicateCandidates, createPendingDuplicateRelations } from '@/lib/duplicates/duplicate-detector';
+import { createErrorResponse, createSuccessResponse } from '@/lib/utils/api-error';
+import { logger } from '@/lib/logging/logger';
+
+const submitReportSchema = z.object({
+  description: z.string().min(10, 'Please enter a description of at least 10 characters.'),
+  category: z.enum([
+    'ROAD_POTHOLE',
+    'GARBAGE_OVERFLOW',
+    'BROKEN_STREETLIGHT',
+    'WATER_LEAKAGE',
+    'DRAINAGE_BLOCKAGE',
+    'TRAFFIC_SIGNAL_DAMAGED',
+    'PUBLIC_INFRA_DAMAGE',
+  ]).optional(),
+  imageUrl: z.string().url('Invalid image URL').optional().or(z.literal('')),
+  latitude: z.number().min(-90).max(90),
+  longitude: z.number().min(-180).max(180),
+  addressText: z.string().min(3, 'Address location is required.'),
+});
+
+export async function POST(req: NextRequest) {
+  try {
+    const storageConfig = getStorageConfig();
+    const body = await req.json();
+
+    // 1. Validate Input Payload
+    const parseResult = submitReportSchema.safeParse(body);
+    if (!parseResult.success) {
+      return createErrorResponse('Invalid submission payload.', 'VALIDATION_ERROR', 400, parseResult.error.format());
+    }
+
+    const { description, category: userCategory, imageUrl, latitude, longitude, addressText } = parseResult.data;
+
+    // 2. Generate Readable Case ID (e.g. CS-1045)
+    const randomNum = Math.floor(1000 + Math.random() * 9000);
+    const caseId = `CS-${randomNum}`;
+    const trackingCode = crypto.randomUUID(); // Secure unique citizen tracking UUID
+
+    // 3. Invoke Phase 4C AI Multi-modal Analysis
+    logger.info('SubmitAPI', `Running AI multi-modal analysis for Case ${caseId}...`);
+    const { analysis, isFallback } = await analyzeCivicIssue(description, imageUrl || undefined);
+
+    const finalCategory = userCategory || analysis.category;
+    const title = `${finalCategory.replace('_', ' ')} near ${addressText.split(',')[0] || addressText}`;
+    const summary = analysis.summary || description.slice(0, 120);
+
+    // 4. Invoke Phase 4E Priority Engine
+    const priorityResult = calculatePriorityScore({
+      category: finalCategory,
+      aiSeverity: analysis.severity,
+      aiSafetyRiskScore: analysis.safetyRiskScore,
+      description,
+      addressText,
+      reportCount: 1,
+      affectedCitizensCount: 1,
+    });
+
+    // 5. Map Department Code to Database UUID
+    const deptCodeMap: Record<string, { id: string; name: string; code: string }> = {
+      ROAD_MAINT: { id: '11111111-1111-1111-1111-111111111111', name: 'Road Maintenance & Infrastructure', code: 'ROAD_MAINT' },
+      SANITATION: { id: '22222222-2222-2222-2222-222222222222', name: 'Sanitation & Waste Management', code: 'SANITATION' },
+      ELECTRICAL: { id: '33333333-3333-3333-3333-333333333333', name: 'Electrical & Street Lighting', code: 'ELECTRICAL' },
+      WATER_DEPT: { id: '44444444-4444-4444-4444-444444444444', name: 'Water Supply & Quality', code: 'WATER_DEPT' },
+      DRAINAGE: { id: '55555555-5555-5555-5555-555555555555', name: 'Drainage & Sewerage', code: 'DRAINAGE' },
+    };
+    const deptObj = deptCodeMap[analysis.recommendedDepartmentCode] || deptCodeMap.ROAD_MAINT;
+    const departmentId = deptObj.id;
+
+    let incident: any = null;
+    let report: any = null;
+
+    if (storageConfig.isMock) {
+      // EXPLICIT MOCK / DEMO MODE: Safe in-memory storage
+      logger.info('SubmitAPI', `Storing report in EXPLICIT MOCK mode: ${caseId}`);
+      const generatedId = `inc-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`;
+
+      incident = mockStore.addIncident({
+        id: generatedId,
+        case_id: caseId,
+        title,
+        summary,
+        category: finalCategory,
+        severity: analysis.severity,
+        status: 'AI_ANALYSED',
+        priority_score: priorityResult.priorityScore,
+        priority_factors: {
+          safetyRisk: priorityResult.factorScores.safetyRiskScore,
+          publicImpact: priorityResult.factorScores.publicImpactScore,
+          severity: priorityResult.factorScores.severityScore,
+          recurrence: priorityResult.factorScores.recurrenceScore,
+          locationSensitivity: priorityResult.factorScores.locationSensitivityScore,
+          explanation: priorityResult.explanationSummary,
+        },
+        latitude,
+        longitude,
+        address: addressText,
+        department_id: departmentId,
+        departments: deptObj,
+        report_count: 1,
+        affected_citizens_count: 1,
+        is_duplicate_flagged: false,
+        created_at: new Date().toISOString(),
+      });
+
+      report = mockStore.addReport({
+        id: `rep-${Date.now()}`,
+        incident_id: generatedId,
+        tracking_code: trackingCode,
+        raw_description: description,
+        image_url: imageUrl || null,
+        latitude,
+        longitude,
+        address_text: addressText,
+        is_original_report: true,
+        created_at: new Date().toISOString(),
+      });
+
+      mockStore.addAiAnalysis({
+        id: `ai-${Date.now()}`,
+        incident_id: generatedId,
+        confidence_score: analysis.confidenceScore,
+        detected_category: analysis.category,
+        detected_severity: analysis.severity,
+        suggested_department_code: analysis.recommendedDepartmentCode,
+        extracted_features: {
+          safetyRiskScore: analysis.safetyRiskScore,
+          importantDetails: analysis.importantDetails,
+          summary: analysis.summary,
+        },
+        created_at: new Date().toISOString(),
+      });
+    } else {
+      // EXPLICIT SUPABASE MODE: Production database persistence
+      logger.info('SubmitAPI', `Storing report in SUPABASE mode: ${caseId}`);
+      const supabase = createAdminClient();
+
+      try {
+        const { data: incData, error: incErr } = await supabase
+          .from('incidents')
+          .insert({
+            case_id: caseId,
+            title,
+            summary,
+            category: finalCategory,
+            severity: analysis.severity,
+            status: 'AI_ANALYSED',
+            priority_score: priorityResult.priorityScore,
+            priority_factors: {
+              safetyRisk: priorityResult.factorScores.safetyRiskScore,
+              publicImpact: priorityResult.factorScores.publicImpactScore,
+              severity: priorityResult.factorScores.severityScore,
+              recurrence: priorityResult.factorScores.recurrenceScore,
+              locationSensitivity: priorityResult.factorScores.locationSensitivityScore,
+              explanation: priorityResult.explanationSummary,
+            },
+            latitude,
+            longitude,
+            address: addressText,
+            department_id: departmentId,
+            report_count: 1,
+            affected_citizens_count: 1,
+            is_duplicate_flagged: false,
+          })
+          .select()
+          .single();
+
+        if (incErr || !incData) {
+          logger.error('SubmitAPI', 'Supabase DB insertion error in production mode', { error: incErr });
+          return createErrorResponse(
+            'Service temporarily unavailable. Please try again.',
+            'SERVICE_UNAVAILABLE',
+            503
+          );
+        }
+
+        incident = incData;
+
+        const { data: repData, error: repErr } = await supabase
+          .from('reports')
+          .insert({
+            incident_id: incident.id,
+            tracking_code: trackingCode,
+            raw_description: description,
+            image_url: imageUrl || null,
+            latitude,
+            longitude,
+            address_text: addressText,
+            is_original_report: true,
+          })
+          .select()
+          .single();
+
+        if (repErr) {
+          logger.error('SubmitAPI', 'Supabase report insertion error in production mode', { error: repErr });
+        }
+        report = repData;
+      } catch (dbException) {
+        logger.error('SubmitAPI', 'Supabase connection failure in production mode', { error: String(dbException) });
+        return createErrorResponse(
+          'Service temporarily unavailable. Please try again.',
+          'SERVICE_UNAVAILABLE',
+          503
+        );
+      }
+    }
+
+    // 7. Save AI Metadata Persistence
+    if (storageConfig.isSupabase) {
+      saveAIAnalysisMetadata(incident.id, analysis, { raw: description }).catch(() => {});
+    }
+
+    // 8. Generate & Save Embedding Vector
+    const normalizedText = buildNormalizedEmbeddingText(finalCategory, description, summary);
+    const embeddingVector = await generateTextEmbedding(normalizedText);
+    if (embeddingVector) {
+      if (storageConfig.isSupabase) {
+        saveIncidentEmbedding(incident.id, report?.id, embeddingVector).catch(() => {});
+      }
+      mockStore.addEmbedding(incident.id, embeddingVector);
+    }
+
+    // 9. Run Phase 4D Duplicate Detector
+    logger.info('SubmitAPI', `Running duplicate detection for candidate ${caseId}...`);
+    let duplicateCount = 0;
+    try {
+      const duplicateCandidates = await findDuplicateCandidates({
+        candidateIncidentId: incident.id,
+        latitude,
+        longitude,
+        category: finalCategory,
+        embeddingVector,
+      });
+
+      if (duplicateCandidates.length > 0) {
+        duplicateCount = await createPendingDuplicateRelations(incident.id, duplicateCandidates);
+        logger.info('SubmitAPI', `Flagged ${duplicateCount} pending duplicate relation(s) for ${caseId}.`);
+      }
+    } catch (dupErr) {
+      logger.warn('SubmitAPI', 'Duplicate detection error handled safely', { error: String(dupErr) });
+    }
+
+    return createSuccessResponse({
+      caseId,
+      trackingCode,
+      incidentId: incident.id,
+      category: finalCategory,
+      priorityScore: priorityResult.priorityScore,
+      priorityLevel: priorityResult.priorityLevel,
+      duplicatesFlagged: duplicateCount,
+      isAiFallback: isFallback,
+      storageMode: storageConfig.mode,
+    });
+  } catch (error) {
+    if (error instanceof GeminiConfigurationError) {
+      return createErrorResponse(
+        'AI classification engine is unconfigured in production environment.',
+        'AI_UNCONFIGURED',
+        503
+      );
+    }
+    if (error instanceof ProductionDatabaseError) {
+      return createErrorResponse(
+        'Service temporarily unavailable. Please try again.',
+        'SERVICE_UNAVAILABLE',
+        503
+      );
+    }
+    logger.error('SubmitAPI', 'Exception during report submission', { error: error instanceof Error ? error.message : String(error) });
+    return createErrorResponse(
+      'We couldn\'t submit your report right now. Please check your connection and try again.',
+      'SUBMISSION_ERROR',
+      500
+    );
+  }
+}
+
