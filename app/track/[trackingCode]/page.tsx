@@ -184,6 +184,23 @@ export default function CitizenStatusPage({ params }: { params: Promise<{ tracki
         {/* Left Column (2 Cols wide on Desktop) */}
         <div className="lg:col-span-2 space-y-6">
 
+          {/* Community Cluster Notification Banner */}
+          {data.isClustered && (
+            <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-300 rounded-2xl flex items-start gap-3 shadow-xs">
+              <div className="h-8 w-8 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-xs">
+                🔥
+              </div>
+              <div className="space-y-0.5 text-xs">
+                <span className="font-bold text-amber-950 block text-sm">
+                  Community Clustered Issue ({data.reportCount} Neighbors Reported)
+                </span>
+                <p className="text-amber-800 leading-relaxed font-medium">
+                  Your report has been automatically linked with {data.reportCount - 1} other reports in this immediate area. The community priority has been elevated for expedited municipal action.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Overview Card */}
           <Card className="p-5 sm:p-6 space-y-4 bg-white border-slate-200 shadow-sm rounded-2xl">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">

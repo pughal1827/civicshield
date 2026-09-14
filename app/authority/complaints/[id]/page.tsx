@@ -16,6 +16,10 @@ import {
   Edit3,
   Calendar,
   FileCheck,
+  Flame,
+  Users,
+  Layers,
+  ShieldCheck,
 } from 'lucide-react';
 import { LoadingState } from '@/components/ui/loading-state';
 
@@ -228,6 +232,11 @@ export default function ComplaintDetailsPage({ params }: { params: Promise<{ id:
               <span className="px-3 py-1 rounded-full text-xs font-black bg-rose-600 text-white uppercase">
                 {incident.severity || 'CRITICAL'} (Score: {incident.priority_score || incident.priorityScore || 85})
               </span>
+              {((reports && reports.length > 1) || (incident.report_count > 1) || (incident.reportCount > 1)) && (
+                <span className="px-3 py-1 rounded-full text-xs font-black bg-gradient-to-r from-amber-500 to-rose-500 text-white shadow-xs flex items-center gap-1">
+                  <Flame className="h-3.5 w-3.5" /> Clustered: {reports?.length || incident.report_count || incident.reportCount || 2} Citizens Reported
+                </span>
+              )}
             </div>
             <h1 className="text-2xl font-black text-slate-900 tracking-tight mt-2">
               {incident.title}
@@ -251,6 +260,65 @@ export default function ComplaintDetailsPage({ params }: { params: Promise<{ id:
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column (7 cols): Information, Evidence, Timeline */}
         <div className="lg:col-span-7 space-y-6">
+          {/* Multi-Citizen Clustered Reports Section */}
+          {reports && reports.length > 1 && (
+            <div className="bg-white rounded-2xl border border-amber-200/80 p-6 space-y-4 shadow-xs">
+              <div className="flex items-center justify-between border-b border-amber-100 pb-3">
+                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                  <Flame className="h-4 w-4 text-amber-500" /> Clustered Citizen Submissions ({reports.length} Citizen Reports)
+                </h2>
+                <span className="text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full">
+                  Auto-Merged by Proximity & Category
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                {reports.map((rep: any, idx: number) => (
+                  <div
+                    key={rep.id || rep.tracking_code || idx}
+                    className="p-4 rounded-xl border border-slate-200/80 bg-slate-50/70 hover:bg-slate-50 transition-all space-y-2.5 text-xs"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded-md font-bold text-[10px] bg-slate-200 text-slate-800">
+                          {idx === 0 ? 'Primary Reporter' : `Citizen Reporter #${idx + 1}`}
+                        </span>
+                        <span className="font-mono text-slate-500 text-[11px]">
+                          Track: {rep.tracking_code || rep.trackingCode || 'N/A'}
+                        </span>
+                      </div>
+                      <span className="text-slate-400 font-mono text-[10px]">
+                        {formatExactDate(rep.created_at || rep.createdAt)}
+                      </span>
+                    </div>
+
+                    <p className="text-slate-800 font-medium leading-relaxed">
+                      "{rep.raw_description || rep.rawDescription || rep.description || 'No additional comment provided.'}"
+                    </p>
+
+                    {(rep.address_text || rep.addressText) && (
+                      <div className="text-[11px] text-slate-500 flex items-center gap-1">
+                        <MapPin className="h-3 w-3 text-rose-500 shrink-0" />
+                        <span>{rep.address_text || rep.addressText}</span>
+                      </div>
+                    )}
+
+                    {(rep.image_url || rep.imageUrl) && (
+                      <div className="relative h-44 w-full rounded-xl overflow-hidden border border-slate-200 bg-slate-100 mt-2">
+                        <Image
+                          src={rep.image_url || rep.imageUrl}
+                          alt={`Evidence from citizen #${idx + 1}`}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Complaint Info */}
           <div className="bg-white rounded-2xl border border-slate-200/80 p-6 space-y-4 shadow-xs">
             <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-3">

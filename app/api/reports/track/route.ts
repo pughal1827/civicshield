@@ -155,11 +155,13 @@ export async function GET(req: NextRequest) {
       address: incident.address,
       latitude: Number(incident.latitude),
       longitude: Number(incident.longitude),
-      submittedAt: incident.created_at,
-      resolvedAt: incident.resolved_at || null,
+      submittedAt: incident.created_at || incident.createdAt,
+      resolvedAt: incident.resolved_at || incident.resolvedAt || null,
       resolutionEvidence: resolutionInfo,
       timeline: sanitizedTimeline,
       isPossessionOfSecretUUID,
+      isClustered: (incident.report_count > 1 || incident.reportCount > 1),
+      reportCount: incident.report_count || incident.reportCount || 1,
     });
   } catch (error) {
     if (error instanceof ProductionDatabaseError) {

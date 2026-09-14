@@ -30,12 +30,31 @@ export default function MyReportsPage() {
   const fetchMyReports = async () => {
     setRefreshing(true);
     try {
+      // 1. Get saved local tracking codes / cases
+      let localSaved: any[] = [];
+      try {
+        const savedStr = localStorage.getItem('civicshield_my_reports');
+        if (savedStr) localSaved = JSON.parse(savedStr);
+      } catch {
+        localSaved = [];
+      }
+
       const res = await fetch('/api/incidents');
       if (res.ok) {
         const json = await res.json();
-        if (json.success && Array.isArray(json.data?.incidents)) {
-          setReports(json.data.incidents);
+        const allIncs = Array.isArray(json.data) ? json.data : Array.isArray(json.data?.incidents) ? json.data.incidents : [];
+
+        if (localSaved.length > 0) {
+          const localIds = new Set(localSaved.map(r => r.id || r.incidentId || r.caseId));
+          const matched = allIncs.filter((inc: any) => localIds.has(inc.id) || localIds.has(inc.caseId));
+          // If some reports are only in localSaved, merge them
+          const finalReports = matched.length > 0 ? matched : localSaved;
+          setReports(finalReports);
+        } else {
+          setReports(allIncs);
         }
+      } else if (localSaved.length > 0) {
+        setReports(localSaved);
       }
     } catch (err) {
       console.error('Error fetching my reports:', err);
@@ -170,7 +189,7 @@ export default function MyReportsPage() {
                           : 'bg-sky-100 text-sky-700'
                       }`}
                     >
-                      {inc.status.replace('_', ' ')}
+                      {(inc.status || 'SUBMITTED').replace('_', ' ')}
                     </span>
                   </div>
 

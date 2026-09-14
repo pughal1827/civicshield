@@ -20,6 +20,11 @@ const ALL_CATEGORIES: IncidentCategory[] = [
   'DRAINAGE_BLOCKAGE',
   'TRAFFIC_SIGNAL_DAMAGED',
   'PUBLIC_INFRA_DAMAGE',
+  'ELECTRICAL_HAZARD',
+  'OPEN_MANHOLE',
+  'SEWAGE_OVERFLOW',
+  'FLOOD',
+  'ILLEGAL_CONSTRUCTION',
 ];
 
 const CATEGORY_LABELS: Record<IncidentCategory, string> = {
@@ -30,6 +35,11 @@ const CATEGORY_LABELS: Record<IncidentCategory, string> = {
   DRAINAGE_BLOCKAGE: 'Drainage & Sewerage',
   TRAFFIC_SIGNAL_DAMAGED: 'Traffic Signals',
   PUBLIC_INFRA_DAMAGE: 'Public Infrastructure',
+  ELECTRICAL_HAZARD: 'Electrical Hazard',
+  OPEN_MANHOLE: 'Open Manhole',
+  SEWAGE_OVERFLOW: 'Sewage Overflow',
+  FLOOD: 'Flooding',
+  ILLEGAL_CONSTRUCTION: 'Illegal Construction',
 };
 
 export async function getIntelligenceOverview(

@@ -94,8 +94,41 @@ export async function GET(req: NextRequest) {
     const inProgressCount = filteredIncidents.filter((i: any) => i.status === 'ASSIGNED' || i.status === 'IN_PROGRESS').length;
     const resolvedCount = filteredIncidents.filter((i: any) => i.status === 'RESOLVED' || i.status === 'VERIFIED').length;
 
+    // Normalize to camelCase for frontend consumption
+    const normalizedIncidents = filteredIncidents.map((inc: any) => ({
+      id: inc.id,
+      caseId: inc.case_id,
+      title: inc.title,
+      summary: inc.summary,
+      category: inc.category,
+      severity: inc.severity,
+      status: inc.status,
+      priorityScore: inc.priority_score ?? 0,
+      priorityFactors: inc.priority_factors || inc.priorityFactors || {},
+      latitude: inc.latitude,
+      longitude: inc.longitude,
+      address: inc.address,
+      departmentId: inc.department_id,
+      departmentName: inc.departments?.name || inc.department_name,
+      departmentCode: inc.departments?.code || inc.department_code,
+      assignedOfficerId: inc.assigned_officer_id,
+      assignedOfficerName: inc.users?.full_name || inc.assigned_officer_name,
+      reportCount: inc.report_count ?? 1,
+      affectedCitizensCount: inc.affected_citizens_count ?? 1,
+      isDuplicateFlagged: inc.is_duplicate_flagged ?? false,
+      masterIncidentId: inc.master_incident_id,
+      imageUrl: inc.image_url,
+      createdAt: inc.created_at,
+      updatedAt: inc.updated_at,
+      resolvedAt: inc.resolved_at,
+      department: inc.departments,
+      user: inc.users,
+      // passthrough for Supabase queries
+      ...inc,
+    }));
+
     return createSuccessResponse({
-      incidents: filteredIncidents,
+      incidents: normalizedIncidents,
       stats: {
         totalCount,
         criticalCount,

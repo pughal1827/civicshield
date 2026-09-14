@@ -1,7 +1,7 @@
 import React from 'react';
 import { IncidentStatus } from '@/types/incident';
 import { Badge } from './badge';
-import { FileText, Cpu, UserCheck, Clock, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { FileText, Cpu, UserCheck, Clock, CheckCircle2, ShieldCheck, Copy, AlertTriangle } from 'lucide-react';
 
 export interface StatusBadgeProps {
   status: IncidentStatus;
@@ -20,6 +20,8 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className }) =
     RESOLVED: { label: 'Resolved', variant: 'emerald', icon: <CheckCircle2 className="h-3 w-3 mr-1 text-emerald-600" /> },
     CITIZEN_VERIFICATION: { label: 'Needs Verification', variant: 'cyan', icon: <ShieldCheck className="h-3 w-3 mr-1 text-cyan-600" /> },
     VERIFIED: { label: 'Verified & Closed', variant: 'emerald', icon: <CheckCircle2 className="h-3 w-3 mr-1 text-emerald-600" /> },
+    DUPLICATE: { label: 'Duplicate Flagged', variant: 'slate', icon: <Copy className="h-3 w-3 mr-1 text-slate-500" /> },
+    ESCALATED: { label: 'Escalated Priority', variant: 'rose', icon: <AlertTriangle className="h-3 w-3 mr-1 text-rose-500" /> },
   };
 
   const current = config[status] || {

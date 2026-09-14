@@ -70,7 +70,7 @@ export function AuthoritySidebar({ unreadCount }: AuthoritySidebarProps) {
   ];
 
   return (
-    <aside className="w-64 bg-[#0b132b] text-slate-300 min-h-screen flex flex-col justify-between shrink-0 shadow-2xl border-r border-slate-800/80 sticky top-0 h-screen select-none">
+    <aside className="w-64 shrink-0 h-screen overflow-y-auto bg-[#0b132b] text-slate-300 flex flex-col justify-between shadow-2xl border-r border-slate-800/80 select-none fixed top-0 left-0 z-50">
       {/* Top Header Logo */}
       <div className="p-6 border-b border-slate-800/60">
         <Link href="/authority" className="flex items-center gap-3 group">

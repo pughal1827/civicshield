@@ -27,8 +27,20 @@ import {
   Map as MapIcon,
   Check,
 } from 'lucide-react';
-import { IncidentMap } from '@/components/maps/incident-map';
+import dynamic from 'next/dynamic';
 import { LoadingState } from '@/components/ui/loading-state';
+
+const IncidentClusterMap = dynamic(
+  () => import('@/components/maps/incident-cluster-map').then((mod) => mod.IncidentClusterMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[460px] bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-center text-slate-500 text-sm animate-pulse">
+        Loading incident map…
+      </div>
+    ),
+  }
+);
 
 interface IncidentItem {
   id: string;
@@ -71,12 +83,12 @@ export default function AuthorityDashboardPage() {
 
   const [incidents, setIncidents] = useState<IncidentItem[]>([]);
   const [stats, setStats] = useState<StatsData>({
-    total: 84,
-    critical: 12,
-    high: 18,
-    working: 26,
-    late: 9,
-    solved: 19,
+    total: 0,
+    critical: 0,
+    high: 0,
+    working: 0,
+    late: 0,
+    solved: 0,
   });
 
   useEffect(() => {
@@ -132,7 +144,8 @@ export default function AuthorityDashboardPage() {
           const list: IncidentItem[] = incJson.data.incidents;
           setIncidents(list);
 
-          // Calculate real metrics
+          // Use real stats from API if available, otherwise compute from incidents
+          const now = Date.now();
           let total = list.length;
           let critical = 0;
           let high = 0;
@@ -140,11 +153,9 @@ export default function AuthorityDashboardPage() {
           let late = 0;
           let solved = 0;
 
-          const now = Date.now();
-
           list.forEach((inc) => {
-            if (inc.severity === 'CRITICAL' || inc.priorityScore >= 80) critical++;
-            else if (inc.severity === 'HIGH' || inc.priorityScore >= 60) high++;
+            if (inc.severity === 'CRITICAL' || (inc.priorityScore || 0) >= 80) critical++;
+            else if (inc.severity === 'HIGH' || (inc.priorityScore || 0) >= 60) high++;
 
             if (inc.status === 'ASSIGNED' || inc.status === 'IN_PROGRESS') working++;
             if (inc.status === 'RESOLVED' || inc.status === 'VERIFIED') solved++;
@@ -157,15 +168,7 @@ export default function AuthorityDashboardPage() {
             }
           });
 
-          // Use real metrics or default fallback
-          setStats({
-            total: total > 0 ? total : 84,
-            critical: critical > 0 ? critical : 12,
-            high: high > 0 ? high : 18,
-            working: working > 0 ? working : 26,
-            late: late > 0 ? late : 9,
-            solved: solved > 0 ? solved : 19,
-          });
+          setStats({ total, critical, high, working, late, solved });
         }
       }
     } catch (err) {
@@ -469,6 +472,12 @@ export default function AuthorityDashboardPage() {
                           <span className="font-mono text-[11px] font-bold text-slate-500">
                             #{inc.caseId}
                           </span>
+                          {(inc.reportCount > 1 || (inc as any).report_count > 1) && (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1">
+                              <Flame className="h-3 w-3 text-amber-600" />
+                              {inc.reportCount || (inc as any).report_count} Clustered
+                            </span>
+                          )}
                         </div>
 
                         <h3 className="font-bold text-slate-900 text-sm leading-snug truncate">
@@ -478,12 +487,14 @@ export default function AuthorityDashboardPage() {
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500 font-medium">
                           <span className="flex items-center gap-1 text-slate-700 font-semibold truncate">
                             <MapPin className="h-3 w-3 text-rose-500 shrink-0" />
-                            {inc.address || 'Gummidipoondi Main Rd'}
+                            {inc.address || 'Location noted'}
                           </span>
                           <span>•</span>
-                          <span>{inc.reportCount || 12} reports</span>
+                          <span className="font-semibold text-slate-700">
+                            {inc.reportCount || 1} {((inc.reportCount || 1) === 1 ? 'citizen report' : 'citizen reports')}
+                          </span>
                           <span>•</span>
-                          <span className="text-sky-700 font-semibold">{inc.departmentName || 'Road Maintenance'}</span>
+                          <span className="text-sky-700 font-semibold">{inc.departmentName || 'Civic Infrastructure'}</span>
                         </div>
 
                         <div className="text-[10px] text-slate-400 font-mono pt-0.5">
@@ -557,13 +568,12 @@ export default function AuthorityDashboardPage() {
               </Link>
             </div>
 
-            {/* Spatial Map Preview */}
+            {/* Spatial Map Preview with Clustering */}
             <div className="relative h-52 w-full rounded-xl overflow-hidden border border-slate-200">
-              <IncidentMap
-                latitude={incidents[0]?.latitude || 13.0827}
-                longitude={incidents[0]?.longitude || 80.2707}
-                title="Gummidipoondi Spatial Overview"
-                className="h-full w-full rounded-xl"
+              <IncidentClusterMap
+                incidents={incidents}
+                height="100%"
+                className="h-full w-full"
               />
             </div>
 

@@ -103,14 +103,24 @@ export default function SameProblemsPage() {
     setProcessingId(pair.relationId);
     setActionSuccessMsg(null);
     try {
+      const payload = action === 'CONFIRM_MERGE'
+        ? {
+            targetIncidentId: pair.targetIncident.id,
+            duplicateIncidentIds: [pair.candidateIncident.id],
+            mergeReason: 'Officer verified identical problem report.',
+            performedBy: 'Officer',
+          }
+        : {
+            targetIncidentId: pair.targetIncident.id,
+            duplicateIncidentIds: [],
+            mergeReason: 'Officer verified distinct physical complaints — kept separate.',
+            performedBy: 'Officer',
+          };
+
       await fetch('/api/incidents/merge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action,
-          duplicateRelationId: pair.relationId,
-          reason: action === 'CONFIRM_MERGE' ? 'Officer verified identical problem report.' : 'Officer verified distinct physical complaints.',
-        }),
+        body: JSON.stringify(payload),
       });
 
       setDuplicatePairs((prev) => prev.filter((p) => p.relationId !== pair.relationId));

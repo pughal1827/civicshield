@@ -50,15 +50,12 @@ export default function CitizenDashboardPage() {
       setUserReports([]);
     }
 
-    // 3. Fetch all incidents for nearby map preview & updates feed
+    // 3. Fetch all incidents for nearby map preview & community updates
     fetch('/api/incidents')
       .then((res) => res.json())
       .then((json) => {
         if (json.success && Array.isArray(json.data)) {
           setAllIncidents(json.data);
-          if (userReports.length === 0) {
-            setUserReports(json.data.slice(0, 4));
-          }
         }
       })
       .catch(() => {});

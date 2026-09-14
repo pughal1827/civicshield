@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
-import { Search, FileText, Eye, RefreshCw, MapPin, Filter } from 'lucide-react';
+import { Search, FileText, Eye, RefreshCw, MapPin, Filter, Flame } from 'lucide-react';
 import { LoadingState } from '@/components/ui/loading-state';
 
 interface IncidentItem {
@@ -239,6 +239,12 @@ export default function ComplaintsPage() {
                     >
                       {inc.status.replace('_', ' ')}
                     </span>
+                    {(inc.reportCount > 1 || (inc as any).report_count > 1) && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1">
+                        <Flame className="h-3 w-3 text-amber-600" />
+                        {inc.reportCount || (inc as any).report_count} Reports Clustered
+                      </span>
+                    )}
                   </div>
 
                   <h3 className="font-bold text-slate-900 text-sm leading-snug truncate">{inc.title}</h3>

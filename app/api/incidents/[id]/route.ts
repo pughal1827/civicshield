@@ -45,12 +45,12 @@ export async function GET(
       // EXPLICIT DEMO MODE
       incident = mockStore.getIncident(incidentId);
       if (incident) {
-        const rep = mockStore.getReport(incidentId);
-        if (rep) reports = [rep];
-        aiAnalysis = mockStore.getAiAnalysis(incidentId);
-        duplicates = mockStore.getDuplicateRelations(incidentId);
-        resolutionEvidence = mockStore.getResolutionEvidence(incidentId);
-        auditLogs = mockStore.getAuditLogs(incidentId);
+        const repList = mockStore.getReportsByIncident(incident.id || incidentId);
+        reports = repList.length > 0 ? repList : (mockStore.getReport(incidentId) ? [mockStore.getReport(incidentId)] : []);
+        aiAnalysis = mockStore.getAiAnalysis(incident.id || incidentId);
+        duplicates = mockStore.getDuplicateRelations(incident.id || incidentId);
+        resolutionEvidence = mockStore.getResolutionEvidence(incident.id || incidentId);
+        auditLogs = mockStore.getAuditLogs(incident.id || incidentId);
       }
     } else {
       // EXPLICIT SUPABASE / PRODUCTION MODE (Fail closed if database fails)
