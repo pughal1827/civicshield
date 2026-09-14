@@ -17,11 +17,16 @@ export async function GET(req: NextRequest) {
     let userIncidents: any[] = [];
 
     if (config.isMock) {
-      if (session?.user) {
-        const allReports = mockStore.getReports();
-        const userReports = allReports.filter(r => r.citizen_id === session.user.id || r.citizenId === session.user.id);
+      const allReports = mockStore.getReports();
+      let userReports = session?.user
+        ? allReports.filter(r => r.citizen_id === session.user.id || r.citizenId === session.user.id)
+        : [];
+      
+      // Fallback: If no specific user reports exist yet, show demo incidents for notifications
+      if (userReports.length === 0) {
+        userIncidents = mockStore.getAllIncidents();
+      } else {
         const userIncidentIds = new Set(userReports.map(r => r.incident_id || r.incidentId));
-        
         userIncidents = mockStore.getAllIncidents().filter(inc => userIncidentIds.has(inc.id));
       }
     } else {
@@ -52,40 +57,48 @@ export async function GET(req: NextRequest) {
     }
 
     const notifications = userIncidents.map((inc) => {
-      let title = `Report ${inc.case_id} Status Update`;
-      let message = `Your report for "${inc.title}" is currently ${inc.status.replace('_', ' ')}.`;
+      let title = `Report ${inc.case_id || inc.caseId} Status Update`;
+      let statusName = (inc.status || 'SUBMITTED').replace('_', ' ');
+      let message = `Your report for "${inc.title}" is currently ${statusName}.`;
       let type: 'info' | 'action' | 'success' = 'info';
 
       if (inc.status === 'ASSIGNED') {
-        message = `Your report ${inc.case_id} has been assigned to ${inc.departments?.name || 'Department'}.`;
+        title = `Report Assigned: ${inc.case_id || inc.caseId}`;
+        message = `Your report ${inc.case_id || inc.caseId} has been assigned to ${inc.departments?.name || 'Department'}.`;
       } else if (inc.status === 'IN_PROGRESS') {
-        message = `Field teams have started repair work on ${inc.case_id}.`;
+        title = `Work Started: ${inc.case_id || inc.caseId}`;
+        message = `Field teams have started repair work on ${inc.case_id || inc.caseId}.`;
       } else if (inc.status === 'RESOLVED' || inc.status === 'CITIZEN_VERIFICATION') {
-        title = `Action Required: Verify ${inc.case_id}`;
+        title = `Action Required: Verify ${inc.case_id || inc.caseId}`;
         message = `Repair completed! Please confirm if the issue was resolved to your satisfaction.`;
         type = 'action';
+        statusName = 'Resolved (Verification Needed)';
       } else if (inc.status === 'VERIFIED') {
-        title = `Report ${inc.case_id} Closed`;
+        title = `Report ${inc.case_id || inc.caseId} Closed`;
         message = `Thank you! Your verification was confirmed and the report is now closed.`;
         type = 'success';
+        statusName = 'Verified & Closed';
       }
 
       return {
         id: `notif-${inc.id}`,
-        caseId: inc.case_id,
+        caseId: inc.case_id || inc.caseId || 'CS-2026-1001',
         incidentId: inc.id,
         title,
         message,
         type,
         status: inc.status,
-        createdAt: inc.created_at || new Date().toISOString(),
+        statusName,
+        createdAt: inc.created_at || inc.createdAt || new Date().toISOString(),
         read: false,
       };
     });
 
+    const unreadCount = notifications.filter((n) => n.type === 'action' || n.status === 'CITIZEN_VERIFICATION' || n.status === 'SUBMITTED').length;
+
     return createSuccessResponse({
       notifications,
-      unreadCount: notifications.filter((n) => n.type === 'action').length,
+      unreadCount,
     });
   } catch (error) {
     if (error instanceof ProductionDatabaseError) {

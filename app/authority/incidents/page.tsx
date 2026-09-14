@@ -1,3 +1,3 @@
-import AuthorityPortalPage from '@/app/authority/page';
+import ComplaintsPage from '@/app/authority/complaints/page';
 
-export default AuthorityPortalPage;
+export default ComplaintsPage;

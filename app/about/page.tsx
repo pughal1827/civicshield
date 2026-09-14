@@ -11,7 +11,7 @@ export default function AboutPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto space-y-8 my-4">
       <div className="space-y-2 text-center sm:text-left">
-        <Link href="/" className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-emerald-400 mb-2">
+        <Link href="/citizen" className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-emerald-400 mb-2">
           <ArrowLeft className="h-3.5 w-3.5" />
           <span>Back to Home</span>
         </Link>

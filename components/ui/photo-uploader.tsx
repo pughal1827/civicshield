@@ -11,7 +11,8 @@ import {
   AlertTriangle,
   X,
   Check,
-  RotateCw
+  RotateCw,
+  Smartphone
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,6 +36,7 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
   disabled = false,
 }) => {
   const galleryInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -67,14 +69,22 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
   useEffect(() => {
     return () => {
       stopCameraStream();
-      if (previewUrl && previewUrl.startsWith('blob:')) {
-        URL.revokeObjectURL(previewUrl);
-      }
       if (capturedBlobUrl && capturedBlobUrl.startsWith('blob:')) {
         URL.revokeObjectURL(capturedBlobUrl);
       }
     };
-  }, [stopCameraStream, previewUrl, capturedBlobUrl]);
+  }, [stopCameraStream, capturedBlobUrl]);
+
+  // Bind cameraStream to videoRef whenever cameraStream or isCameraActive changes
+  useEffect(() => {
+    if (isCameraActive && cameraStream && videoRef.current) {
+      const video = videoRef.current;
+      video.srcObject = cameraStream;
+      video.play().catch((err) => {
+        console.warn('[PhotoUploader] Error playing video stream:', err);
+      });
+    }
+  }, [cameraStream, isCameraActive]);
 
   // Start WebRTC camera stream with specified facingMode
   const startCamera = async (facing: 'environment' | 'user' = 'environment') => {
@@ -93,7 +103,8 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
     setIsCameraActive(true);
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      setCameraError('Camera access is not supported by your current browser. Please choose a photo from your gallery.');
+      setCameraError('Live viewfinder is not supported by this browser. Using native device camera instead...');
+      triggerNativeCamera();
       return;
     }
 
@@ -109,27 +120,19 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       setCameraStream(stream);
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play().catch(() => {
-          // Play Promise may be rejected if interrupted, harmless
-        });
-      }
     } catch (err: any) {
       console.warn('[PhotoUploader] Camera access error:', err);
-      let msg = 'Could not open camera. Please check browser permissions or choose a photo from your gallery.';
+      let msg = 'Could not open camera viewfinder. Opening native device camera...';
 
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        msg = 'Camera permission was denied. Please allow camera access in your browser settings or choose a photo from your gallery.';
+        msg = 'Camera permission was denied. Please allow camera access or choose a photo from gallery.';
       } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-        msg = 'No camera device found. Please choose a photo from your gallery.';
-      } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-        msg = 'Camera is currently in use by another application. Please close other apps using the camera.';
+        msg = 'No camera device found. Opening file picker...';
       }
 
       setCameraError(msg);
-      stopCameraStream();
+      // Trigger native camera input directly as reliable fallback
+      triggerNativeCamera();
     }
   };
 
@@ -145,23 +148,35 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
     const video = videoRef.current;
     const canvas = canvasRef.current;
 
-    if (!video || !canvas || !cameraStream) return;
+    if (!video || !canvas || !cameraStream) {
+      setCameraError('Camera feed is initializing. Please try again.');
+      return;
+    }
 
-    const width = video.videoWidth || 1280;
-    const height = video.videoHeight || 720;
+    // Ensure video frame has rendered dimensions
+    if (video.readyState < 2 || video.videoWidth === 0 || video.videoHeight === 0) {
+      setCameraError('Camera stream is still loading. Please wait a second and try again.');
+      return;
+    }
+
+    const width = video.videoWidth;
+    const height = video.videoHeight;
 
     canvas.width = width;
     canvas.height = height;
 
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) {
+      setCameraError('Could not process canvas context.');
+      return;
+    }
 
     ctx.drawImage(video, 0, 0, width, height);
 
     canvas.toBlob(
       (blob) => {
-        if (!blob) {
-          setCameraError('Failed to capture photo frame. Please try again.');
+        if (!blob || blob.size === 0) {
+          setCameraError('Captured photo frame was empty. Please try again or use Native Camera / Gallery.');
           return;
         }
 
@@ -231,8 +246,18 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
     galleryInputRef.current?.click();
   };
 
-  // Handle standard gallery file selection
-  const handleGalleryFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Trigger native OS camera input directly
+  const triggerNativeCamera = () => {
+    if (disabled) return;
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = '';
+    }
+    setErrorMessage('');
+    cameraInputRef.current?.click();
+  };
+
+  // Handle standard gallery or native camera file selection
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
@@ -252,6 +277,10 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
     setErrorMessage('');
     onFileSelect(compressed, newObjectUrl);
     onExternalUrlSelect('');
+
+    // Reset camera active mode if open
+    setIsCameraActive(false);
+    stopCameraStream();
   };
 
   // Retake or replace current main preview image
@@ -267,6 +296,7 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
       URL.revokeObjectURL(previewUrl);
     }
     if (galleryInputRef.current) galleryInputRef.current.value = '';
+    if (cameraInputRef.current) cameraInputRef.current.value = '';
     setUrlInput('');
     setErrorMessage('');
     onFileSelect(null, '');
@@ -297,7 +327,18 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
         ref={galleryInputRef}
         accept="image/jpeg,image/png,image/webp"
         className="hidden"
-        onChange={handleGalleryFileChange}
+        onChange={handleFileChange}
+        disabled={disabled}
+      />
+
+      {/* Hidden Native Camera Input */}
+      <input
+        type="file"
+        ref={cameraInputRef}
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={handleFileChange}
         disabled={disabled}
       />
 
@@ -359,7 +400,7 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
                 <div className="p-5 text-center space-y-3 bg-slate-900/90 rounded-xl border border-rose-800/80 my-2">
                   <AlertTriangle className="h-8 w-8 text-rose-400 mx-auto" />
                   <div className="space-y-1">
-                    <h4 className="text-sm font-bold text-rose-300">Camera Unavailable</h4>
+                    <h4 className="text-sm font-bold text-rose-300">Camera Notice</h4>
                     <p className="text-xs text-slate-300 max-w-sm mx-auto leading-relaxed">{cameraError}</p>
                   </div>
                   <div className="flex justify-center gap-3 pt-2">
@@ -367,20 +408,21 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
                       type="button"
                       size="sm"
                       variant="primary"
-                      onClick={triggerGallery}
+                      onClick={triggerNativeCamera}
                       className="text-xs font-bold min-h-[40px] px-4"
                     >
-                      <ImageIcon className="h-4 w-4 mr-1.5" />
-                      Choose from Gallery
+                      <Smartphone className="h-4 w-4 mr-1.5" />
+                      Take Photo with Device Camera
                     </Button>
                     <Button
                       type="button"
                       size="sm"
                       variant="outline"
-                      onClick={handleCancelCamera}
+                      onClick={triggerGallery}
                       className="text-xs border-slate-700 min-h-[40px] px-3"
                     >
-                      Cancel
+                      <ImageIcon className="h-4 w-4 mr-1.5" />
+                      Gallery
                     </Button>
                   </div>
                 </div>

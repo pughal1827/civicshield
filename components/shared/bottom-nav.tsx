@@ -13,7 +13,7 @@ export const MobileBottomNav: React.FC = () => {
   if (isAuthority) return null;
 
   const navItems = [
-    { label: 'Home', href: '/', icon: Home },
+    { label: 'Home', href: '/citizen', icon: Home },
     { label: 'My Reports', href: '/my-reports', icon: Clock },
     { label: 'Report', href: '/report', icon: FilePlus, highlight: true },
     { label: 'Alerts', href: '/citizen/notifications', icon: Bell },
@@ -28,8 +28,8 @@ export const MobileBottomNav: React.FC = () => {
       <div className="flex items-center justify-around max-w-md mx-auto">
         {navItems.map((item) => {
           const isActive =
-            item.href === '/'
-              ? pathname === '/'
+            item.href === '/citizen'
+              ? pathname === '/citizen'
               : pathname?.startsWith(item.href);
           const Icon = item.icon;
 

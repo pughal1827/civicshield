@@ -501,7 +501,7 @@ export default function AuthorityEscalationsPage() {
                   </div>
 
                   <div className="flex items-center gap-3 shrink-0">
-                    <Link href={`/dashboard/incidents/${alert.incidentId}`}>
+                    <Link href={`/authority/complaints/${alert.incidentId}`}>
                       <Button size="sm" variant="outline" className="text-xs border-slate-700 hover:border-cyan-500">
                         Open Incident
                         <ChevronRight className="h-3.5 w-3.5 ml-1" />

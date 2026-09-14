@@ -43,7 +43,7 @@ export const Navbar: React.FC = () => {
 
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Brand Logo */}
-        <Link href="/" className="flex items-center gap-2.5 group">
+        <Link href="/citizen" className="flex items-center gap-2.5 group">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-800 text-emerald-400 border border-slate-700 group-hover:border-emerald-500/50 transition-colors">
             <Shield className="h-5 w-5 fill-current" />
           </div>
@@ -59,7 +59,7 @@ export const Navbar: React.FC = () => {
 
         {/* Desktop Navigation Links */}
         <nav className="hidden md:flex items-center gap-5 text-xs font-semibold text-slate-300">
-          <Link href="/" className={`hover:text-emerald-400 transition-colors ${pathname === '/' ? 'text-emerald-400' : ''}`}>
+          <Link href="/citizen" className={`hover:text-emerald-400 transition-colors ${pathname === '/citizen' ? 'text-emerald-400' : ''}`}>
             Home
           </Link>
           <Link href="/report" className={`hover:text-emerald-400 transition-colors flex items-center gap-1.5 ${pathname === '/report' ? 'text-emerald-400' : ''}`}>

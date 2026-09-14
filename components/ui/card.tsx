@@ -2,17 +2,18 @@ import React from 'react';
 import { cn } from '@/lib/utils/cn';
 
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: 'default' | 'glass' | 'interactive';
+  variant?: 'default' | 'glass' | 'interactive' | 'dark';
 }
 
 export const Card = React.forwardRef<HTMLDivElement, CardProps>(
   ({ className, children, variant = 'default', ...props }, ref) => {
-    const baseStyles = 'rounded-xl border transition-all duration-200 shadow-lg';
+    const baseStyles = 'rounded-2xl border transition-all duration-200 shadow-xs';
     
     const variants = {
-      default: 'bg-slate-900/90 border-slate-800 text-slate-100 shadow-slate-950/40',
-      glass: 'bg-slate-900/60 backdrop-blur-md border-slate-800/80 text-slate-100 shadow-slate-950/50',
-      interactive: 'bg-slate-900/90 border-slate-800 hover:border-emerald-500/50 hover:shadow-emerald-950/20 text-slate-100 cursor-pointer hover:-translate-y-0.5',
+      default: 'bg-white border-slate-200 text-slate-900 shadow-sm',
+      glass: 'bg-white/95 backdrop-blur-md border-slate-200 text-slate-900 shadow-sm',
+      interactive: 'bg-white border-slate-200 hover:border-emerald-300 hover:shadow-md text-slate-900 cursor-pointer transition-all',
+      dark: 'bg-slate-900/90 border-slate-800 text-slate-100 shadow-slate-950/40',
     };
 
     return (

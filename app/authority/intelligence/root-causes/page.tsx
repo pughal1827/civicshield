@@ -456,7 +456,7 @@ export default function AuthorityRootCausesPage() {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {selectedSignal.relatedIncidentIds.map((incId) => (
-                      <Link key={incId} href={`/dashboard/incidents/${incId}`}>
+                      <Link key={incId} href={`/authority/complaints/${incId}`}>
                         <Button size="sm" variant="outline" className="text-xs border-slate-700 hover:border-cyan-500 font-mono">
                           Incident #{incId.substring(0, 8)}...
                           <ChevronRight className="h-3 w-3 ml-1" />
