@@ -1,9 +1,128 @@
 {
-  "incidents": [],
-  "reports": [],
-  "aiAnalyses": [],
+  "incidents": [
+    {
+      "id": "inc-1789481251454-969",
+      "case_id": "CS-8717",
+      "caseId": "CS-8717",
+      "title": "BROKEN STREETLIGHT near GPS Location (12.9703",
+      "summary": "street light fix",
+      "category": "BROKEN_STREETLIGHT",
+      "severity": "MEDIUM",
+      "status": "AI_ANALYSED",
+      "priority_score": 50,
+      "priorityScore": 50,
+      "priority_factors": {
+        "safetyRisk": 48,
+        "publicImpact": 40,
+        "severity": 45,
+        "recurrence": 20,
+        "locationSensitivity": 25,
+        "explanation": "Consolidated from 2 citizen reports. Multi-citizen confirmation boosted priority to 50."
+      },
+      "latitude": 12.9703155,
+      "longitude": 79.158989,
+      "department_id": "33333333-3333-3333-3333-333333333333",
+      "departmentId": "33333333-3333-3333-3333-333333333333",
+      "master_incident_id": null,
+      "masterIncidentId": null,
+      "is_duplicate_flagged": false,
+      "report_count": 2,
+      "reportCount": 2,
+      "affected_citizens_count": 2,
+      "affectedCitizensCount": 2,
+      "created_at": "2026-09-15T14:07:31.454Z",
+      "createdAt": "2026-09-15T14:07:31.454Z",
+      "updated_at": "2026-09-15T14:24:27.343Z",
+      "address": "GPS Location (12.9703, 79.1590)",
+      "departments": {
+        "id": "33333333-3333-3333-3333-333333333333",
+        "name": "Electrical & Street Lighting",
+        "code": "ELECTRICAL"
+      },
+      "imageUrl": null,
+      "updatedAt": "2026-09-15T14:24:27.343Z"
+    }
+  ],
+  "reports": [
+    {
+      "id": "rep-1789481251460",
+      "incident_id": "inc-1789481251454-969",
+      "incidentId": "inc-1789481251454-969",
+      "tracking_code": "b7489615-52aa-45c8-a7cd-a52a2018d385",
+      "trackingCode": "b7489615-52aa-45c8-a7cd-a52a2018d385",
+      "raw_description": "street light fix",
+      "rawDescription": "street light fix",
+      "image_url": null,
+      "imageUrl": null,
+      "latitude": 12.9703155,
+      "longitude": 79.158989,
+      "address_text": "GPS Location (12.9703, 79.1590)",
+      "addressText": "GPS Location (12.9703, 79.1590)",
+      "is_original_report": true,
+      "created_at": "2026-09-15T14:07:31.460Z",
+      "createdAt": "2026-09-15T14:07:31.460Z"
+    },
+    {
+      "id": "rep_1789482267343_vbwwol",
+      "incident_id": "inc-1789481251454-969",
+      "incidentId": "inc-1789481251454-969",
+      "citizen_id": "citizen_anon",
+      "citizenId": "citizen_anon",
+      "tracking_code": "efa899d8-eb31-414b-9de7-f7bba2d78d66",
+      "trackingCode": "efa899d8-eb31-414b-9de7-f7bba2d78d66",
+      "raw_description": "street light fix @ XYZ",
+      "rawDescription": "street light fix @ XYZ",
+      "image_url": null,
+      "imageUrl": null,
+      "latitude": 12.9703155,
+      "longitude": 79.158989,
+      "address_text": "GPS Location (12.9703, 79.1590)",
+      "addressText": "GPS Location (12.9703, 79.1590)",
+      "is_original_report": false,
+      "created_at": "2026-09-15T14:24:27.343Z",
+      "createdAt": "2026-09-15T14:24:27.343Z"
+    }
+  ],
+  "aiAnalyses": [
+    {
+      "id": "ai-1789481251465",
+      "incident_id": "inc-1789481251454-969",
+      "confidence_score": 0.95,
+      "detected_category": "BROKEN_STREETLIGHT",
+      "detected_severity": "MEDIUM",
+      "suggested_department_code": "ELECTRICAL",
+      "extracted_features": {
+        "safetyRiskScore": 48,
+        "importantDetails": [
+          "Smart NLP categorized as BROKEN_STREETLIGHT based on keywords.",
+          "Estimated hazard risk score at 48/100 [MEDIUM].",
+          "Assigned to department code: ELECTRICAL."
+        ],
+        "summary": "street light fix"
+      },
+      "created_at": "2026-09-15T14:07:31.465Z"
+    }
+  ],
   "embeddings": [],
   "duplicateRelations": [],
   "resolutionEvidence": [],
-  "auditLogs": []
+  "auditLogs": [
+    {
+      "id": "audit_1789482267347",
+      "incident_id": "inc-1789481251454-969",
+      "performed_by": "CLUSTERING_ENGINE",
+      "action": "MERGED_CITIZEN_COMPLAINT",
+      "old_value": {
+        "reportCount": 1,
+        "priorityScore": 38
+      },
+      "new_value": {
+        "reportCount": 2,
+        "priorityScore": 50,
+        "trackingCode": "efa899d8-eb31-414b-9de7-f7bba2d78d66"
+      },
+      "reason": "Citizen complaint automatically clustered into master complaint #CS-8717 (2 total reports).",
+      "created_at": "2026-09-15T14:24:27.347Z"
+    }
+  ]
 }

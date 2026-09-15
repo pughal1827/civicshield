@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { 
-  FilePlus, 
   MapPin, 
   Camera, 
   CheckCircle2, 
@@ -30,6 +29,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { LocationPicker } from '@/components/maps/location-picker';
 import { PhotoUploader } from '@/components/ui/photo-uploader';
+import { VoiceReporter } from '@/components/report/VoiceReporter';
+
+interface SubmittedResultData {
+  caseId: string;
+  trackingCode: string;
+  category?: string;
+}
 
 export default function ReportIssuePage() {
   const [step, setStep] = useState<number>(1);
@@ -38,7 +44,6 @@ export default function ReportIssuePage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [externalUrl, setExternalUrl] = useState<string>('');
-  const [fileObjectURL, setFileObjectURL] = useState<string>('');
 
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
@@ -50,23 +55,10 @@ export default function ReportIssuePage() {
   const [submitting, setSubmitting] = useState(false);
   const [submissionStageMessage, setSubmissionStageMessage] = useState('Preparing your report...');
   const [submissionError, setSubmissionError] = useState<string | null>(null);
-  const [submittedResult, setSubmittedResult] = useState<any>(null);
+  const [submittedResult, setSubmittedResult] = useState<SubmittedResultData | null>(null);
   const [copied, setCopied] = useState(false);
 
-  // Maintain persistent object URL for selectedFile across multi-step wizard
-  useEffect(() => {
-    if (selectedFile) {
-      const objectUrl = URL.createObjectURL(selectedFile);
-      setFileObjectURL(objectUrl);
-      return () => {
-        URL.revokeObjectURL(objectUrl);
-      };
-    } else {
-      setFileObjectURL('');
-    }
-  }, [selectedFile]);
-
-  const activePhotoPreview = fileObjectURL || previewUrl || externalUrl;
+  const activePhotoPreview = previewUrl || externalUrl;
 
   const steps = [
     { id: 1, title: 'Photo', icon: Camera },
@@ -221,9 +213,10 @@ export default function ReportIssuePage() {
       } else {
         throw new Error(json.error?.message || 'Failed to submit report. Please try again.');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Submission error:', err);
-      setSubmissionError(err.message || 'An unexpected error occurred during submission.');
+      const message = err instanceof Error ? err.message : 'An unexpected error occurred during submission.';
+      setSubmissionError(message);
     } finally {
       setSubmitting(false);
     }
@@ -476,6 +469,21 @@ export default function ReportIssuePage() {
           </div>
 
           <div className="space-y-5">
+            {/* LiveKit Voice-to-Text Reporter */}
+            <VoiceReporter
+              onTranscriptChange={(transcript) => setDescription(transcript)}
+              disabled={submitting}
+            />
+
+            {/* OR Separator */}
+            <div className="relative flex items-center justify-center my-2">
+              <div className="border-t border-slate-200 w-full" />
+              <span className="bg-white px-3 text-[11px] font-black text-slate-400 uppercase tracking-widest">
+                OR
+              </span>
+              <div className="border-t border-slate-200 w-full" />
+            </div>
+
             <div className="space-y-2">
               <label className="block text-xs font-bold text-slate-700">
                 What happened? Describe the issue in detail:
