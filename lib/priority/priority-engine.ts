@@ -47,18 +47,18 @@ export interface PriorityEngineResult {
 
 // 1. Category Safety Hazard Fallback Weights (when AI score unavailable)
 const CATEGORY_SAFETY_HAZARD_WEIGHTS: Record<IncidentCategory, number> = {
-  TRAFFIC_SIGNAL_DAMAGED: 85,
-  DRAINAGE_BLOCKAGE: 80,
-  ROAD_POTHOLE: 75,
-  PUBLIC_INFRA_DAMAGE: 60,
-  WATER_LEAKAGE: 55,
-  BROKEN_STREETLIGHT: 50,
-  GARBAGE_OVERFLOW: 45,
-  ELECTRICAL_HAZARD: 90,
-  OPEN_MANHOLE: 92,
-  SEWAGE_OVERFLOW: 70,
+  OPEN_MANHOLE: 95,
+  ELECTRICAL_HAZARD: 92,
   FLOOD: 88,
-  ILLEGAL_CONSTRUCTION: 65,
+  TRAFFIC_SIGNAL_DAMAGED: 84,
+  ROAD_POTHOLE: 76,
+  SEWAGE_OVERFLOW: 72,
+  DRAINAGE_BLOCKAGE: 65,
+  ILLEGAL_CONSTRUCTION: 58,
+  WATER_LEAKAGE: 52,
+  BROKEN_STREETLIGHT: 48,
+  GARBAGE_OVERFLOW: 45,
+  PUBLIC_INFRA_DAMAGE: 28,
 };
 
 // 2. Sensitive POI Keyword Regex Matcher
@@ -93,7 +93,7 @@ export function calculatePriorityScore(inputs: PriorityEngineInputs): PriorityEn
   const combinedText = `${description} ${addressText}`.toLowerCase();
 
   // -------------------------------------------------------------
-  // FACTOR 1: SAFETY RISK (30% Weight)
+  // FACTOR 1: SAFETY RISK (35% Weight)
   // -------------------------------------------------------------
   let safetyRiskScore = 50;
   let safetyRiskReason = 'Standard safety hazard level assessed.';
@@ -107,79 +107,91 @@ export function calculatePriorityScore(inputs: PriorityEngineInputs): PriorityEn
   }
 
   // Elevate safety risk if severe hazard keywords detected
-  if (combinedText.includes('open manhole') || combinedText.includes('exposed wire') || combinedText.includes('child')) {
-    safetyRiskScore = Math.min(100, safetyRiskScore + 15);
-    safetyRiskReason += ' Elevated due to high-risk hazard keywords (e.g. open manhole/exposed wire/children risk).';
+  if (combinedText.includes('open manhole') || combinedText.includes('exposed wire') || combinedText.includes('sparking') || combinedText.includes('accident')) {
+    safetyRiskScore = Math.min(100, Math.max(safetyRiskScore, 90));
+    safetyRiskReason += ' Elevated due to high-risk hazard keywords (e.g. open manhole/exposed wire/accident risk).';
+  } else if (combinedText.includes('minor') || combinedText.includes('cosmetic') || combinedText.includes('faded')) {
+    safetyRiskScore = Math.max(10, Math.min(safetyRiskScore, 30));
+    safetyRiskReason += ' Lowered due to minor/cosmetic condition keywords.';
   }
 
   // -------------------------------------------------------------
-  // FACTOR 2: PUBLIC IMPACT (25% Weight)
-  // -------------------------------------------------------------
-  // Base public impact starts at 30, scaled logarithmically by report & citizen count
-  const countFactor = Math.max(reportCount, affectedCitizensCount);
-  let publicImpactScore = Math.min(100, Math.round(30 + 25 * Math.log2(Math.max(1, countFactor))));
-  let publicImpactReason = `Public impact calculated from ${countFactor} report(s) / affected citizen(s).`;
-
-  if (combinedText.includes('market') || combinedText.includes('junction') || combinedText.includes('main road')) {
-    publicImpactScore = Math.min(100, publicImpactScore + 20);
-    publicImpactReason += ' Boosted (+20) due to location in a high-footfall public commercial area/junction.';
-  }
-
-  // -------------------------------------------------------------
-  // FACTOR 3: SEVERITY (20% Weight)
+  // FACTOR 2: SEVERITY (25% Weight)
   // -------------------------------------------------------------
   const severityScoreMap: Record<IncidentSeverity, number> = {
     CRITICAL: 100,
     HIGH: 75,
-    MEDIUM: 50,
-    LOW: 25,
+    MEDIUM: 45,
+    LOW: 15,
   };
-  const severityScore = severityScoreMap[aiSeverity] || 50;
+  const severityScore = severityScoreMap[aiSeverity] || 45;
   const severityReason = `Mapped from AI severity classification [${aiSeverity}] to numerical score of ${severityScore}/100.`;
 
   // -------------------------------------------------------------
-  // FACTOR 4: RECURRENCE (15% Weight)
+  // FACTOR 3: PUBLIC IMPACT (20% Weight)
   // -------------------------------------------------------------
-  let recurrenceScore = 30; // Neutral default baseline
-  let recurrenceReason = 'No previous historical complaints recorded nearby (neutral baseline score 30/100).';
+  const countFactor = Math.max(reportCount, affectedCitizensCount);
+  let publicImpactScore = Math.min(100, Math.round(25 + 25 * Math.log2(Math.max(1, countFactor))));
+  let publicImpactReason = `Public impact calculated from ${countFactor} report(s) / affected citizen(s).`;
+
+  if (combinedText.includes('market') || combinedText.includes('junction') || combinedText.includes('main road') || combinedText.includes('bus stand')) {
+    publicImpactScore = Math.min(100, publicImpactScore + 30);
+    publicImpactReason += ' Boosted (+30) due to high-traffic commercial / transit location.';
+  } else if (combinedText.includes('lane') || combinedText.includes('residential') || combinedText.includes('cross')) {
+    publicImpactScore = Math.min(100, publicImpactScore + 10);
+  }
+
+  // -------------------------------------------------------------
+  // FACTOR 4: RECURRENCE & CLUSTER DENSITY (10% Weight)
+  // -------------------------------------------------------------
+  let recurrenceScore = 20;
+  let recurrenceReason = 'First-time reported incident (baseline score 20/100).';
 
   const totalRecurrenceSignal = recurrenceCountInArea + Math.max(0, reportCount - 1);
   if (totalRecurrenceSignal > 0) {
-    recurrenceScore = Math.min(100, Math.round(30 + 20 * Math.log2(1 + totalRecurrenceSignal)));
-    recurrenceReason = `${totalRecurrenceSignal} repeated report(s) / nearby historical complaint(s) recorded in area.`;
+    recurrenceScore = Math.min(100, Math.round(30 + 25 * Math.log2(1 + totalRecurrenceSignal)));
+    recurrenceReason = `${totalRecurrenceSignal} repeated report(s) / clustered citizen confirmations recorded in area.`;
   }
 
   // -------------------------------------------------------------
   // FACTOR 5: LOCATION SENSITIVITY (10% Weight)
   // -------------------------------------------------------------
-  let locationSensitivityScore = 30; // Standard residential/lane default
-  let locationSensitivityReason = 'Located in standard residential/secondary area (default score 30/100).';
+  let locationSensitivityScore = 25;
+  let locationSensitivityReason = 'Located in secondary municipal zone (baseline score 25/100).';
 
   const hasSensitiveKeyword = SENSITIVE_POI_KEYWORDS.some((kw) => combinedText.includes(kw));
   if (isNearSensitiveLocation || hasSensitiveKeyword) {
-    locationSensitivityScore = 90;
-    locationSensitivityReason = 'Incident is located in close proximity to a sensitive POI (e.g. school/hospital/main facility).';
+    locationSensitivityScore = 95;
+    locationSensitivityReason = 'Incident is located in close proximity to a high-priority POI (e.g. school/hospital/main junction).';
   }
 
   // -------------------------------------------------------------
   // WEIGHTED COMPOSITE SCORE CALCULATION
+  // Formula: Score = 0.35 * Safety + 0.25 * Severity + 0.20 * Impact + 0.10 * Recurrence + 0.10 * Location
   // -------------------------------------------------------------
-  const safetyRiskContribution = Math.round(safetyRiskScore * 0.30 * 100) / 100;
-  const publicImpactContribution = Math.round(publicImpactScore * 0.25 * 100) / 100;
-  const severityContribution = Math.round(severityScore * 0.20 * 100) / 100;
-  const recurrenceContribution = Math.round(recurrenceScore * 0.15 * 100) / 100;
+  const safetyRiskContribution = Math.round(safetyRiskScore * 0.35 * 100) / 100;
+  const severityContribution = Math.round(severityScore * 0.25 * 100) / 100;
+  const publicImpactContribution = Math.round(publicImpactScore * 0.20 * 100) / 100;
+  const recurrenceContribution = Math.round(recurrenceScore * 0.10 * 100) / 100;
   const locationSensitivityContribution = Math.round(locationSensitivityScore * 0.10 * 100) / 100;
 
-  const rawWeightedScore =
-    safetyRiskScore * 0.30 +
-    publicImpactScore * 0.25 +
-    severityScore * 0.20 +
-    recurrenceScore * 0.15 +
-    locationSensitivityScore * 0.10;
+  let rawWeightedScore =
+    safetyRiskContribution +
+    severityContribution +
+    publicImpactContribution +
+    recurrenceContribution +
+    locationSensitivityContribution;
 
-  const priorityScore = Math.min(100, Math.max(0, Math.round(rawWeightedScore)));
+  // CRITICAL HAZARD TIER GUARANTEES
+  if (aiSeverity === 'CRITICAL' || safetyRiskScore >= 90) {
+    rawWeightedScore = Math.max(82, rawWeightedScore); // Ensure critical issues always score >= 82
+  } else if (aiSeverity === 'LOW' && safetyRiskScore <= 35) {
+    rawWeightedScore = Math.min(38, rawWeightedScore); // Ensure low/cosmetic issues stay <= 38
+  }
 
-  // Assign Priority Level
+  const priorityScore = Math.min(100, Math.max(5, Math.round(rawWeightedScore)));
+
+  // Assign Categorical Priority Level
   let priorityLevel: PriorityLevel = 'LOW';
   if (priorityScore >= 80) {
     priorityLevel = 'CRITICAL';
@@ -191,7 +203,7 @@ export function calculatePriorityScore(inputs: PriorityEngineInputs): PriorityEn
     priorityLevel = 'LOW';
   }
 
-  const explanationSummary = `Priority ${priorityScore}/100 [${priorityLevel}] calculated from Safety Risk (${safetyRiskScore} @ 30%), Public Impact (${publicImpactScore} @ 25%), Severity (${severityScore} @ 20%), Recurrence (${recurrenceScore} @ 15%), and Location Sensitivity (${locationSensitivityScore} @ 10%).`;
+  const explanationSummary = `Priority ${priorityScore}/100 [${priorityLevel}] calculated via Civic Risk Matrix: Safety Risk (${safetyRiskScore} @ 35%), Severity (${severityScore} @ 25%), Public Impact (${publicImpactScore} @ 20%), Recurrence (${recurrenceScore} @ 10%), Location (${locationSensitivityScore} @ 10%).`;
 
   return {
     priorityScore,

@@ -1,7 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
 
-const EMBEDDING_MODEL = process.env.GEMINI_EMBEDDING_MODEL || 'text-embedding-004';
-export const EXPECTED_EMBEDDING_DIMENSION = 768;
+const EMBEDDING_MODEL = process.env.GEMINI_EMBEDDING_MODEL || 'gemini-embedding-001';
+export const EXPECTED_EMBEDDING_DIMENSION = 3072;
 
 export function buildNormalizedEmbeddingText(
   category: string,

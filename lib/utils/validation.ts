@@ -2,8 +2,8 @@ import { z } from 'zod';
 
 export const reportSubmissionSchema = z.object({
   description: z.string().min(10, 'Description must be at least 10 characters').max(2000),
-  imageUrl: z.string().url('Invalid image URL').optional().or(z.literal('')),
-  audioUrl: z.string().url('Invalid audio URL').optional().or(z.literal('')),
+  imageUrl: z.string().optional().or(z.literal('')),
+  audioUrl: z.string().optional().or(z.literal('')),
   latitude: z.number().min(-90).max(90, 'Invalid latitude'),
   longitude: z.number().min(-180).max(180, 'Invalid longitude'),
   addressText: z.string().min(3, 'Address is required').max(500),

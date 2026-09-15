@@ -8,6 +8,11 @@ export const aiCategoryEnum = z.enum([
   'DRAINAGE_BLOCKAGE',
   'TRAFFIC_SIGNAL_DAMAGED',
   'PUBLIC_INFRA_DAMAGE',
+  'ELECTRICAL_HAZARD',
+  'OPEN_MANHOLE',
+  'SEWAGE_OVERFLOW',
+  'FLOOD',
+  'ILLEGAL_CONSTRUCTION',
 ]);
 
 export const aiSeverityEnum = z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']);
@@ -24,9 +29,9 @@ export const aiDepartmentCodeEnum = z.enum([
 
 export const aiAnalysisOutputSchema = z.object({
   category: aiCategoryEnum,
-  summary: z.string().max(120, 'Summary must not exceed 120 characters'),
+  summary: z.string().max(300).transform((s) => s.slice(0, 120)),
   severity: aiSeverityEnum,
-  safetyRiskScore: z.number().int().min(0).max(100),
+  safetyRiskScore: z.number().min(0).max(100),
   recommendedDepartmentCode: aiDepartmentCodeEnum,
   confidenceScore: z.number().min(0.0).max(1.0),
   importantDetails: z.array(z.string()).default([]),
@@ -36,7 +41,7 @@ export type AIAnalysisOutput = z.infer<typeof aiAnalysisOutputSchema>;
 
 export const aiAnalysisRequestSchema = z.object({
   description: z.string().min(5, 'Complaint text description must be at least 5 characters'),
-  imageUrl: z.string().url('Invalid image URL').optional().or(z.literal('')),
+  imageUrl: z.string().optional().or(z.literal('')),
 });
 
 export type AIAnalysisRequestInput = z.infer<typeof aiAnalysisRequestSchema>;
