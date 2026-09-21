@@ -43,51 +43,56 @@ interface WorkerTask {
 export default function DepartmentWorkerPortalPage() {
   const [tasks, setTasks] = useState<WorkerTask[]>([
     {
-      id: 'inc-1789481251454-969',
-      caseId: 'CS-8717',
-      title: 'Broken Streetlight Fix & Wiring Replacement',
-      category: 'BROKEN_STREETLIGHT',
-      address: 'GPS Location (12.9703, 79.1590) · Anna Salai Road',
-      priorityScore: 78,
-      status: 'IN_PROGRESS',
-      description: 'Streetlight pole #42 is flickering and completely off at night. Need bulb replacement and junction box inspection.',
-      beforePhoto: '/images/citizen_reporting.jpg',
-      createdAt: '2026-09-15T14:07:31.454Z',
-      department: 'Electrical & Street Lighting'
-    },
-    {
-      id: 'task-002',
-      caseId: 'CS-9120',
-      title: 'Deep Pothole Asphalt Patching',
-      category: 'POTHOLE',
-      address: 'Near Central Railway Gate 3, Sector 4',
-      priorityScore: 85,
+      id: 'inc-case-001',
+      caseId: 'CASE-001',
+      title: 'Deep Pothole Asphalt Repair on Main Road',
+      category: 'ROAD_POTHOLE',
+      address: '42 Main Road, Sector 1',
+      priorityScore: 75,
       status: 'ASSIGNED',
-      description: 'Dangerous 4ft wide pothole in central lane causing vehicle slowdowns and safety hazard.',
-      createdAt: '2026-09-18T09:15:00.000Z',
-      department: 'Roads & Infrastructure'
-    },
-    {
-      id: 'task-003',
-      caseId: 'CS-6402',
-      title: 'Storm Drain Debris Clearing',
-      category: 'DRAINAGE',
-      address: 'Cross Street 12, Ward 8',
-      priorityScore: 62,
-      status: 'COMPLETED',
-      description: 'Clogged storm water drain overflow during rain. Cleared plastic waste and silt.',
-      afterPhoto: '/images/officer_command.jpg',
-      createdAt: '2026-09-14T11:30:00.000Z',
-      department: 'Sanitation & Drainage'
+      description: 'Deep pothole causing vehicle damage near school crossing',
+      beforePhoto: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&auto=format&fit=crop&q=80',
+      createdAt: '2026-09-21T10:00:00.000Z',
+      department: 'Road Maintenance'
     }
   ]);
 
   const [activeTab, setActiveTab] = useState<'ALL' | 'ASSIGNED' | 'IN_PROGRESS' | 'COMPLETED'>('ALL');
-  const [selectedTask, setSelectedTask] = useState<WorkerTask | null>(tasks[0]);
+  const [selectedTask, setSelectedTask] = useState<WorkerTask | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [workNotes, setWorkNotes] = useState('');
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/worker/incidents')
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success && json.data?.incidents && json.data.incidents.length > 0) {
+          const mapped: WorkerTask[] = json.data.incidents.map((inc: any) => ({
+            id: inc.id,
+            caseId: inc.caseId || inc.case_id || 'CASE-001',
+            title: inc.title,
+            category: inc.category,
+            address: inc.address,
+            priorityScore: inc.priorityScore || inc.priority_score || 75,
+            status: inc.status === 'IN_PROGRESS' ? 'IN_PROGRESS' : inc.status === 'CLOSED' || inc.status === 'VERIFIED' || inc.status === 'RESOLVED' ? 'COMPLETED' : 'ASSIGNED',
+            description: inc.summary || inc.description,
+            beforePhoto: inc.imageUrl || inc.before_photo_url,
+            afterPhoto: inc.evidence?.proof_image_url || inc.afterPhotoUrl,
+            createdAt: inc.createdAt || inc.created_at,
+            department: inc.departmentName || inc.departments?.name || 'Road Maintenance'
+          }));
+          setTasks(mapped);
+          setSelectedTask(mapped[0]);
+        } else {
+          setSelectedTask(tasks[0]);
+        }
+      })
+      .catch(() => {
+        setSelectedTask(tasks[0]);
+      });
+  }, []);
 
   // Filter tasks by active tab
   const filteredTasks = tasks.filter((t) => {

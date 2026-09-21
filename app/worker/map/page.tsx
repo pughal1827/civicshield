@@ -60,7 +60,7 @@ export default function WorkerMapLocationsPage() {
 
       {/* MAP CONTAINER */}
       <div className="bg-slate-900 rounded-3xl overflow-hidden border border-slate-800 shadow-xl h-[500px] relative">
-        <IncidentClusterMap incidents={incidents} />
+        <IncidentClusterMap incidents={incidents} baseCaseUrl="/worker/jobs" />
       </div>
 
       {/* JOB LOCATIONS DISPATCH CARDS */}

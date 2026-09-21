@@ -34,6 +34,11 @@ export interface MockResolutionEvidence {
   resolution_notes: string;
   citizen_verified: boolean;
   citizen_feedback?: string;
+  status?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CLOSED' | 'REOPENED';
+  reviewed_by?: string;
+  reviewed_at?: string;
+  rejection_reason?: string;
+  attempts?: Array<any>;
   created_at: string;
 }
 
@@ -98,15 +103,109 @@ class MockDataStore {
         }
         if (Array.isArray(data.auditLogs)) this.auditLogs = data.auditLogs;
 
+        if (this.incidents.size === 0) {
+          this.seedInitialSingleExample();
+        }
         console.log(`[MockStore] ✓ Loaded ${this.incidents.size} incidents from disk.`);
       } else {
+        this.seedInitialSingleExample();
         this.syncPersist();
-        console.log('[MockStore] ✓ Initialized fresh clean data store.');
+        console.log('[MockStore] ✓ Initialized fresh clean data store with CASE-001.');
       }
     } catch {
+      this.seedInitialSingleExample();
       this.syncPersist();
-      console.log('[MockStore] ✓ Initialized fresh clean data store.');
+      console.log('[MockStore] ✓ Initialized fresh clean data store with CASE-001.');
     }
+  }
+
+  private seedInitialSingleExample(): void {
+    const singleExampleIncident = {
+      id: "inc-case-001",
+      case_id: "CASE-001",
+      caseId: "CASE-001",
+      title: "Deep Pothole Asphalt Repair on Main Road",
+      summary: "Deep pothole causing vehicle damage near school crossing",
+      category: "ROAD_POTHOLE",
+      severity: "HIGH",
+      status: "SUBMITTED",
+      priority_score: 75,
+      priorityScore: 75,
+      priority_factors: {
+        safetyRisk: 80,
+        publicImpact: 70,
+        severity: 75,
+        recurrence: 20,
+        locationSensitivity: 85,
+        explanation: "Priority 75/100 [HIGH] calculated via Civic Risk Matrix."
+      },
+      latitude: 13.0827,
+      longitude: 80.2707,
+      department_id: "ROAD_MAINTENANCE",
+      departmentId: "ROAD_MAINTENANCE",
+      departmentCode: "ROAD_MAINTENANCE",
+      departmentName: "Road Maintenance",
+      master_incident_id: null,
+      masterIncidentId: null,
+      is_duplicate_flagged: false,
+      report_count: 1,
+      reportCount: 1,
+      affected_citizens_count: 1,
+      affectedCitizensCount: 1,
+      created_at: "2026-09-21T10:00:00.000Z",
+      createdAt: "2026-09-21T10:00:00.000Z",
+      updated_at: "2026-09-21T10:00:00.000Z",
+      updatedAt: "2026-09-21T10:00:00.000Z",
+      address: "42 Main Road, Sector 1",
+      departments: {
+        id: "ROAD_MAINTENANCE",
+        code: "ROAD_MAINTENANCE",
+        name: "Road Maintenance"
+      },
+      imageUrl: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&auto=format&fit=crop&q=80",
+      assigned_officer_id: "user-worker-road-001",
+      assigned_worker_id: "user-worker-road-001",
+      assignedWorkerId: "user-worker-road-001",
+      assignedWorker: "Alex Rivera (Road Maintenance Lead)",
+      assignedWorkerName: "Alex Rivera (Road Maintenance Lead)"
+    };
+
+    this.incidents.set(singleExampleIncident.id, singleExampleIncident);
+
+    this.reports.set("rep-case-001", {
+      id: "rep-case-001",
+      incident_id: "inc-case-001",
+      incidentId: "inc-case-001",
+      citizen_id: "user-citizen-001",
+      citizenId: "user-citizen-001",
+      tracking_code: "case-001-tracking-uuid",
+      trackingCode: "case-001-tracking-uuid",
+      raw_description: "Deep pothole causing vehicle damage near school crossing",
+      rawDescription: "Deep pothole causing vehicle damage near school crossing",
+      image_url: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&auto=format&fit=crop&q=80",
+      imageUrl: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&auto=format&fit=crop&q=80",
+      latitude: 13.0827,
+      longitude: 80.2707,
+      address_text: "42 Main Road, Sector 1",
+      addressText: "42 Main Road, Sector 1",
+      is_original_report: true,
+      created_at: "2026-09-21T10:00:00.000Z",
+      createdAt: "2026-09-21T10:00:00.000Z"
+    });
+
+    this.aiAnalyses.set("inc-case-001", {
+      id: "ai-case-001",
+      incident_id: "inc-case-001",
+      confidence_score: 0.95,
+      detected_category: "ROAD_POTHOLE",
+      detected_severity: "HIGH",
+      suggested_department_code: "ROAD_MAINTENANCE",
+      extracted_features: {
+        keywords: ["pothole", "asphalt", "road", "vehicle damage"],
+        safetyRiskScore: 80
+      },
+      created_at: "2026-09-21T10:00:00.000Z"
+    });
   }
 
   // --- Synchronous persistence (fires & forgets) ---

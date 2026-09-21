@@ -2,35 +2,17 @@ import { NextRequest } from 'next/server';
 import { getSessionByToken, getUserByEmail } from '@/lib/auth/session';
 import { mockStore } from '@/lib/db/mock-store';
 import { createErrorResponse, createSuccessResponse } from '@/lib/utils/api-error';
+import { normalizeDepartmentCode } from '@/lib/constants/departments';
 
 function isIncidentAssignedToWorkerDept(incident: any, worker: any): boolean {
-  const wDeptId = worker.departmentId || '';
-  const wDeptCode = worker.departmentCode || '';
-  const wDeptName = (worker.departmentName || '').toLowerCase();
-
-  const incDeptId = incident.department_id || incident.departmentId || incident.departments?.id || '';
-  const incDeptCode = incident.departmentCode || incident.department_code || incident.departments?.code || '';
-  const incDeptName = (incident.departmentName || incident.departments?.name || '').toLowerCase();
-  const incCategory = (incident.category || '').toUpperCase();
-
-  if (wDeptId && (incDeptId === wDeptId || incDeptId === wDeptId.toLowerCase())) return true;
-  if (wDeptCode && (incDeptCode === wDeptCode || incDeptCode.includes(wDeptCode))) return true;
-  if (wDeptName && incDeptName && (incDeptName.includes(wDeptName) || wDeptName.includes(incDeptName))) return true;
-
-  const categoryDeptMap: Record<string, string[]> = {
-    ROAD_MAINT: ['ROAD_POTHOLE', 'PUBLIC_INFRA_DAMAGE', 'POTHOLE', 'ROAD'],
-    ELECTRICAL: ['BROKEN_STREETLIGHT', 'ELECTRICAL_HAZARD', 'STREETLIGHT'],
-    SANITATION: ['GARBAGE_OVERFLOW', 'GARBAGE', 'SANITATION', 'CLEANING'],
-    WATER_DEPT: ['WATER_LEAKAGE', 'WATER_SUPPLY', 'WATER'],
-    DRAINAGE: ['DRAINAGE_BLOCKAGE', 'OPEN_MANHOLE', 'SEWAGE_OVERFLOW', 'DRAINAGE'],
-    TRAFFIC: ['TRAFFIC_SIGNAL_DAMAGED', 'TRAFFIC_SIGNAL', 'TRAFFIC'],
-    PUBLIC_WORKS: ['PUBLIC_INFRA_DAMAGE', 'ILLEGAL_CONSTRUCTION', 'BUILDING'],
-  };
-
-  const categoriesForWorker = categoryDeptMap[wDeptCode] || [];
-  if (categoriesForWorker.some((cat) => incCategory.includes(cat))) return true;
-
-  return false;
+  const workerDept = normalizeDepartmentCode(
+    worker.departmentCode || worker.departmentId || worker.departmentName
+  );
+  const incidentDept = normalizeDepartmentCode(
+    incident.department_id || incident.departmentId || incident.departmentCode || incident.department_code || incident.departments?.code || incident.departments?.id || incident.departments?.name,
+    incident.category
+  );
+  return workerDept === incidentDept;
 }
 
 export async function GET(

@@ -6,20 +6,44 @@ import { getStorageConfig, ProductionDatabaseError } from '@/lib/db/storage-conf
 import { calculatePriorityScore } from '@/lib/priority/priority-engine';
 import { smartClassifyComplaint, DEPARTMENT_NAMES } from '@/lib/ai/smart-categorizer';
 import { createErrorResponse, createSuccessResponse } from '@/lib/utils/api-error';
+import { normalizeDepartmentCode, DEPARTMENT_DISPLAY_NAMES } from '@/lib/constants/departments';
 
 const updateIncidentSchema = z.object({
   status: z.enum([
     'SUBMITTED',
     'AI_ANALYSED',
     'ASSIGNED',
+    'ACCEPTED',
     'IN_PROGRESS',
+    'WAITING_FOR_APPROVAL',
+    'PENDING_CITIZEN_VERIFICATION',
+    'WORK_COMPLETED',
+    'AWAITING_VERIFICATION',
+    'EVIDENCE_REJECTED',
     'RESOLVED',
     'CITIZEN_VERIFICATION',
     'VERIFIED',
+    'CLOSED',
+    'REOPENED',
   ]).optional(),
-  departmentId: z.string().uuid().optional(),
-  assignedOfficerId: z.string().uuid().optional(),
+  departmentId: z.string().optional(),
+  assignedDepartment: z.string().optional(),
+  assignedOfficerId: z.string().optional(),
+  assignedWorkerId: z.string().optional(),
+  assignedWorkerName: z.string().optional(),
+  assignedWorker: z.string().optional(),
+  assignedBy: z.string().optional(),
+  approvedBy: z.string().optional(),
+  rejectedBy: z.string().optional(),
+  changedBy: z.string().optional(),
   reason: z.string().optional(),
+  rejectionReason: z.string().optional(),
+  previousDepartment: z.string().optional(),
+  previousWorker: z.string().optional(),
+  oldAssignedAt: z.string().optional(),
+  newDepartment: z.string().optional(),
+  newWorker: z.string().optional(),
+  newAssignedAt: z.string().optional(),
 });
 
 export async function GET(
@@ -201,7 +225,27 @@ export async function PATCH(
       return createErrorResponse('Invalid update payload.', 'VALIDATION_ERROR', 400, parseResult.error.format());
     }
 
-    const { status, departmentId, assignedOfficerId, reason } = parseResult.data;
+    const {
+      status,
+      departmentId,
+      assignedDepartment,
+      assignedOfficerId,
+      assignedWorkerId,
+      assignedWorkerName,
+      assignedWorker,
+      assignedBy,
+      approvedBy,
+      rejectedBy,
+      changedBy,
+      reason,
+      rejectionReason,
+      previousDepartment,
+      previousWorker,
+      oldAssignedAt,
+      newDepartment,
+      newWorker,
+      newAssignedAt,
+    } = parseResult.data;
 
     let existingIncident: any = null;
 
@@ -230,18 +274,128 @@ export async function PATCH(
 
     const updatePayload: Record<string, unknown> = {};
     const auditActions: string[] = [];
+    const serverNow = new Date().toISOString();
+    const officerName = req.headers.get('x-officer-name') || approvedBy || rejectedBy || assignedBy || changedBy || 'Officer Robert Chen';
 
-    if (status && status !== existingIncident.status) {
-      updatePayload.status = status;
-      auditActions.push(`STATUS_CHANGED_TO_${status}`);
-      if (status === 'RESOLVED' || status === 'VERIFIED') {
-        updatePayload.resolved_at = new Date().toISOString();
-      }
-    }
+    const isReassigning = Boolean(
+      departmentId ||
+      newDepartment ||
+      (assignedWorkerId && assignedWorkerId !== existingIncident.assigned_worker_id) ||
+      (assignedWorkerName && assignedWorkerName !== existingIncident.assignedWorker)
+    );
 
-    if (departmentId && departmentId !== existingIncident.department_id) {
-      updatePayload.department_id = departmentId;
+    if (isReassigning) {
+      const prevDept = previousDepartment || existingIncident.departmentName || existingIncident.department_id || 'Previous Department';
+      const prevWorker = previousWorker || existingIncident.assignedWorker || existingIncident.assignedWorkerName || existingIncident.assigned_worker_id || 'Previous Worker';
+      const oldAssignedAtVal = oldAssignedAt || existingIncident.assigned_at || existingIncident.assignedAt || existingIncident.created_at;
+
+      const targetDeptInput = departmentId || newDepartment || assignedDepartment || existingIncident.department_id || 'ROAD_MAINT';
+      const normCode = normalizeDepartmentCode(targetDeptInput);
+      const deptName = DEPARTMENT_DISPLAY_NAMES[normCode] || targetDeptInput;
+
+      const newWorkerIdVal = assignedWorkerId || assignedOfficerId || 'user-worker-new-001';
+      const newWorkerNameVal = newWorker || assignedWorkerName || assignedWorker || newWorkerIdVal;
+
+      updatePayload.status = 'ASSIGNED';
+
+      // Previous & New Assignment Tracking
+      updatePayload.previous_department = prevDept;
+      updatePayload.previousDepartment = prevDept;
+      updatePayload.previous_worker = prevWorker;
+      updatePayload.previousWorker = prevWorker;
+      updatePayload.old_assigned_at = oldAssignedAtVal;
+      updatePayload.oldAssignedAt = oldAssignedAtVal;
+
+      updatePayload.new_department = deptName;
+      updatePayload.newDepartment = deptName;
+      updatePayload.new_worker = newWorkerNameVal;
+      updatePayload.newWorker = newWorkerNameVal;
+      updatePayload.new_assigned_at = newAssignedAt || serverNow;
+      updatePayload.newAssignedAt = newAssignedAt || serverNow;
+
+      // Active Department & Worker
+      updatePayload.department_id = normCode;
+      updatePayload.departmentId = normCode;
+      updatePayload.departmentCode = normCode;
+      updatePayload.departmentName = deptName;
+      updatePayload.assignedDepartment = deptName;
+      updatePayload.departments = { id: normCode, code: normCode, name: deptName };
+
+      updatePayload.assigned_officer_id = newWorkerIdVal;
+      updatePayload.assigned_worker_id = newWorkerIdVal;
+      updatePayload.assignedWorkerId = newWorkerIdVal;
+      updatePayload.assignedWorker = newWorkerNameVal;
+      updatePayload.assignedWorkerName = newWorkerNameVal;
+
+      updatePayload.assigned_by = officerName;
+      updatePayload.assignedBy = officerName;
+      updatePayload.assigned_at = serverNow;
+      updatePayload.assignedAt = serverNow;
+
+      updatePayload.changed_by = officerName;
+      updatePayload.changedBy = officerName;
+      updatePayload.changed_at = serverNow;
+      updatePayload.changedAt = serverNow;
+
       auditActions.push('DEPARTMENT_REASSIGNED');
+    } else if (status === 'PENDING_CITIZEN_VERIFICATION' || status === 'RESOLVED') {
+      const targetStatus = status || 'PENDING_CITIZEN_VERIFICATION';
+      updatePayload.status = targetStatus;
+      updatePayload.approved_by = officerName;
+      updatePayload.approvedBy = officerName;
+      updatePayload.approved_at = serverNow;
+      updatePayload.approvedAt = serverNow;
+      updatePayload.changed_by = officerName;
+      updatePayload.changedBy = officerName;
+      updatePayload.changed_at = serverNow;
+      updatePayload.changedAt = serverNow;
+      auditActions.push('EVIDENCE_APPROVED');
+
+      if (config.isMock) {
+        const existingEv = mockStore.getResolutionEvidence(incidentId);
+        if (existingEv) {
+          mockStore.setResolutionEvidence({
+            ...existingEv,
+            status: 'APPROVED',
+            reviewed_by: officerName,
+            reviewed_at: serverNow,
+          });
+        }
+      }
+    } else if (status === 'EVIDENCE_REJECTED') {
+      const finalRejectionReason = rejectionReason || reason || 'Field repair evidence was rejected by authority officer.';
+      updatePayload.status = 'EVIDENCE_REJECTED';
+      updatePayload.rejection_reason = finalRejectionReason;
+      updatePayload.rejectionReason = finalRejectionReason;
+      updatePayload.rejected_by = officerName;
+      updatePayload.rejectedBy = officerName;
+      updatePayload.rejected_at = serverNow;
+      updatePayload.rejectedAt = serverNow;
+      updatePayload.changed_by = officerName;
+      updatePayload.changedBy = officerName;
+      updatePayload.changed_at = serverNow;
+      updatePayload.changedAt = serverNow;
+      auditActions.push('EVIDENCE_REJECTED');
+
+      if (config.isMock) {
+        const existingEv = mockStore.getResolutionEvidence(incidentId);
+        if (existingEv) {
+          mockStore.setResolutionEvidence({
+            ...existingEv,
+            status: 'REJECTED',
+            rejection_reason: finalRejectionReason,
+            reviewed_by: officerName,
+            reviewed_at: serverNow,
+          });
+        }
+      }
+    } else if (status && status !== existingIncident.status) {
+      updatePayload.status = status;
+      updatePayload.changed_by = officerName;
+      updatePayload.changedBy = officerName;
+      updatePayload.changed_at = serverNow;
+      updatePayload.changedAt = serverNow;
+      auditActions.push(`STATUS_CHANGED_TO_${status}`);
     }
 
     if (assignedOfficerId && assignedOfficerId !== existingIncident.assigned_officer_id) {

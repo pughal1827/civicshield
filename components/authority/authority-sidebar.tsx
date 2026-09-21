@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   Flame,
   FileText,
+  Camera,
   MapPin,
   Clock,
   GitMerge,
@@ -56,6 +57,7 @@ export function AuthoritySidebar({ unreadCount }: AuthoritySidebarProps) {
     { name: 'Dashboard', href: '/authority', icon: LayoutDashboard },
     { name: 'Priority List', href: '/authority/priority', icon: Flame },
     { name: 'All Complaints', href: '/authority/complaints', icon: FileText },
+    { name: 'Evidence Approval', href: '/authority/evidence', icon: Camera },
     { name: 'Map', href: '/authority/map', icon: MapPin },
     { name: 'Late Complaints', href: '/authority/late', icon: Clock },
     { name: 'Same Problems', href: '/authority/duplicates', icon: GitMerge },
@@ -63,6 +65,7 @@ export function AuthoritySidebar({ unreadCount }: AuthoritySidebarProps) {
     { name: 'Reports', href: '/authority/reports', icon: BarChart3 },
     { name: 'Departments', href: '/authority/intelligence/departments', icon: Building2 },
   ];
+
 
   const bottomItems = [
     { name: 'Profile', href: '/authority/profile', icon: User },

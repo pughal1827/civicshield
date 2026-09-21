@@ -86,7 +86,7 @@ export default function CitizenStatusPage({ params }: { params: Promise<{ tracki
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          trackingCode: data.trackingCode,
+          trackingCode: data.trackingCode || data.caseId || trackingCode,
           action,
           feedback: action === 'ACCEPT' ? 'Citizen verified repair completed.' : rejectReason.trim(),
         }),
@@ -139,7 +139,7 @@ export default function CitizenStatusPage({ params }: { params: Promise<{ tracki
     );
   }
 
-  const isResolvedOrVerifying = ['RESOLVED', 'CITIZEN_VERIFICATION', 'VERIFIED'].includes(data.status);
+  const isResolvedOrVerifying = ['RESOLVED', 'CITIZEN_VERIFICATION', 'PENDING_CITIZEN_VERIFICATION', 'VERIFIED', 'CLOSED', 'REOPENED'].includes(data.status);
 
   return (
     <div className="min-h-screen bg-slate-50/50 text-slate-900 p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto space-y-6 my-2 pb-24">
@@ -272,7 +272,7 @@ export default function CitizenStatusPage({ params }: { params: Promise<{ tracki
               )}
 
               {/* Interactive Verification Controls */}
-              {data.status !== 'VERIFIED' ? (
+              {data.status !== 'CLOSED' && data.status !== 'VERIFIED' ? (
                 <div className="p-5 bg-white border border-emerald-200 rounded-2xl space-y-4 shadow-sm">
                   {!showAcceptConfirm && !showRejectForm && (
                     <>

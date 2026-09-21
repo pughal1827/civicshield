@@ -24,6 +24,7 @@ import {
   X,
 } from 'lucide-react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import type { Incident } from '@/types/incident';
 
 // ─── Fix default Leaflet markers in Next.js ────────────────────────────────
@@ -221,6 +222,7 @@ export interface IncidentClusterMapProps {
   className?: string;
   onIncidentClick?: (incident: Incident | any) => void;
   showControls?: boolean;
+  baseCaseUrl?: string;
 }
 
 export const IncidentClusterMap: React.FC<IncidentClusterMapProps> = ({
@@ -231,7 +233,12 @@ export const IncidentClusterMap: React.FC<IncidentClusterMapProps> = ({
   className = '',
   onIncidentClick,
   showControls = true,
+  baseCaseUrl,
 }) => {
+  const pathname = usePathname();
+  const defaultBaseUrl = pathname?.startsWith('/worker') ? '/worker/jobs' : '/authority/complaints';
+  const targetBaseUrl = baseCaseUrl || defaultBaseUrl;
+
   const containerRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
   const [zoom, setZoom] = useState(13);
@@ -523,10 +530,10 @@ export const IncidentClusterMap: React.FC<IncidentClusterMapProps> = ({
 
           <div className="flex items-center gap-2 pt-1">
             <Link
-              href={`/authority/complaints/${selectedIncident.id}`}
+              href={`${targetBaseUrl}/${selectedIncident.id}`}
               className="flex-1 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl text-center shadow-xs transition-colors flex items-center justify-center gap-1"
             >
-              <span>Inspect Full Dossier</span>
+              <span>{targetBaseUrl.startsWith('/worker') ? 'View Job Details' : 'Inspect Full Dossier'}</span>
               <ExternalLink className="h-3 w-3" />
             </Link>
 
@@ -754,7 +761,7 @@ export const IncidentClusterMap: React.FC<IncidentClusterMapProps> = ({
                       {item.reportCount || 1} Report{item.reportCount > 1 ? 's' : ''}
                     </span>
                     <Link
-                      href={`/authority/complaints/${item.id}`}
+                      href={`${targetBaseUrl}/${item.id}`}
                       className="text-sky-600 hover:text-sky-700 font-bold flex items-center gap-0.5 hover:underline"
                     >
                       View Case <ExternalLink className="h-2.5 w-2.5" />

@@ -15,11 +15,9 @@ export function WorkerLayout({ children }: WorkerLayoutProps) {
   const [workerUser, setWorkerUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  if (pathname === '/worker/login') {
-    return <>{children}</>;
-  }
-
   useEffect(() => {
+    if (pathname === '/worker/login') return;
+
     fetch('/api/auth/me')
       .then((res) => res.json())
       .then((json) => {
@@ -48,7 +46,11 @@ export function WorkerLayout({ children }: WorkerLayoutProps) {
         });
       })
       .finally(() => setLoading(false));
-  }, [router]);
+  }, [router, pathname]);
+
+  if (pathname === '/worker/login') {
+    return <>{children}</>;
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex flex-col md:flex-row">

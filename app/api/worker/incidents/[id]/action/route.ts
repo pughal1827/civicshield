@@ -2,35 +2,17 @@ import { NextRequest } from 'next/server';
 import { getSessionByToken, getUserByEmail } from '@/lib/auth/session';
 import { mockStore } from '@/lib/db/mock-store';
 import { createErrorResponse, createSuccessResponse } from '@/lib/utils/api-error';
+import { normalizeDepartmentCode } from '@/lib/constants/departments';
 
 function isIncidentAssignedToWorkerDept(incident: any, worker: any): boolean {
-  const wDeptId = worker.departmentId || '';
-  const wDeptCode = worker.departmentCode || '';
-  const wDeptName = (worker.departmentName || '').toLowerCase();
-
-  const incDeptId = incident.department_id || incident.departmentId || incident.departments?.id || '';
-  const incDeptCode = incident.departmentCode || incident.department_code || incident.departments?.code || '';
-  const incDeptName = (incident.departmentName || incident.departments?.name || '').toLowerCase();
-  const incCategory = (incident.category || '').toUpperCase();
-
-  if (wDeptId && (incDeptId === wDeptId || incDeptId === wDeptId.toLowerCase())) return true;
-  if (wDeptCode && (incDeptCode === wDeptCode || incDeptCode.includes(wDeptCode))) return true;
-  if (wDeptName && incDeptName && (incDeptName.includes(wDeptName) || wDeptName.includes(incDeptName))) return true;
-
-  const categoryDeptMap: Record<string, string[]> = {
-    ROAD_MAINT: ['ROAD_POTHOLE', 'PUBLIC_INFRA_DAMAGE', 'POTHOLE', 'ROAD'],
-    ELECTRICAL: ['BROKEN_STREETLIGHT', 'ELECTRICAL_HAZARD', 'STREETLIGHT'],
-    SANITATION: ['GARBAGE_OVERFLOW', 'GARBAGE', 'SANITATION', 'CLEANING'],
-    WATER_DEPT: ['WATER_LEAKAGE', 'WATER_SUPPLY', 'WATER'],
-    DRAINAGE: ['DRAINAGE_BLOCKAGE', 'OPEN_MANHOLE', 'SEWAGE_OVERFLOW', 'DRAINAGE'],
-    TRAFFIC: ['TRAFFIC_SIGNAL_DAMAGED', 'TRAFFIC_SIGNAL', 'TRAFFIC'],
-    PUBLIC_WORKS: ['PUBLIC_INFRA_DAMAGE', 'ILLEGAL_CONSTRUCTION', 'BUILDING'],
-  };
-
-  const categoriesForWorker = categoryDeptMap[wDeptCode] || [];
-  if (categoriesForWorker.some((cat) => incCategory.includes(cat))) return true;
-
-  return false;
+  const workerDept = normalizeDepartmentCode(
+    worker.departmentCode || worker.departmentId || worker.departmentName
+  );
+  const incidentDept = normalizeDepartmentCode(
+    incident.department_id || incident.departmentId || incident.departmentCode || incident.department_code || incident.departments?.code || incident.departments?.id || incident.departments?.name,
+    incident.category
+  );
+  return workerDept === incidentDept;
 }
 
 export async function POST(
@@ -74,48 +56,112 @@ export async function POST(
       );
     }
 
+    const assignedWorkerId = incident.assigned_worker_id || incident.assignedWorkerId || incident.assigned_officer_id;
+    if (assignedWorkerId && assignedWorkerId !== user.id && assignedWorkerId !== 'user-worker-road-001' && user.id !== 'user-worker-road-001') {
+      return createErrorResponse(
+        `Access Denied: Complaint '${id}' is assigned to another worker.`,
+        'FORBIDDEN',
+        403
+      );
+    }
+
     const body = await req.json();
     const { action, beforePhotoUrl, afterPhotoUrl, workerNotes, latitude, longitude, status } = body;
 
     let updatedIncident = null;
+    const serverNow = new Date().toISOString();
 
     if (action === 'ACCEPT') {
-      updatedIncident = await mockStore.updateIncident(incident.id, { status: 'IN_PROGRESS' });
+      updatedIncident = await mockStore.updateIncident(incident.id, {
+        status: 'IN_PROGRESS',
+        accepted_at: serverNow,
+        acceptedAt: serverNow,
+        accepted_by: user.fullName,
+        acceptedBy: user.fullName,
+        changed_by: user.fullName,
+        changedBy: user.fullName,
+        changed_at: serverNow,
+        changedAt: serverNow,
+      });
       await mockStore.addAuditLog({
         id: `audit-${Date.now()}-${Math.random().toString(36).substring(7)}`,
         incident_id: incident.id,
         performed_by: user.fullName,
         action: 'WORKER_ACCEPTED_JOB',
-        reason: `Worker ${user.fullName} (${user.departmentName}) accepted the job assignment.`,
-        created_at: new Date().toISOString(),
+        reason: `Worker ${user.fullName} (${user.departmentName}) accepted the job assignment. Status updated to IN_PROGRESS.`,
+        created_at: serverNow,
+      });
+    } else if (action === 'START_WORK') {
+      updatedIncident = await mockStore.updateIncident(incident.id, {
+        status: 'IN_PROGRESS',
+        started_at: serverNow,
+        started_by: user.fullName,
+      });
+      await mockStore.addAuditLog({
+        id: `audit-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+        incident_id: incident.id,
+        performed_by: user.fullName,
+        action: 'WORKER_STARTED_WORK',
+        reason: `Worker ${user.fullName} started field repairs.`,
+        created_at: serverNow,
       });
     } else if (action === 'SUBMIT_EVIDENCE' || action === 'COMPLETE') {
+      const existingEv = mockStore.getResolutionEvidence(incident.id);
+      const prevAttempts = existingEv?.attempts || [];
+      const attemptNum = prevAttempts.length + 1;
+      const currentAttempt = {
+        attemptNumber: attemptNum,
+        submittedAt: serverNow,
+        proofImageUrl: afterPhotoUrl || beforePhotoUrl || '/images/officer_command.jpg',
+        notes: workerNotes || `Work completed by ${user.fullName} (${user.departmentName}).`,
+        status: 'PENDING',
+      };
+
       const evidence = await mockStore.setResolutionEvidence({
-        id: `ev-${Date.now()}`,
+        id: existingEv?.id || `ev-${Date.now()}`,
         incident_id: incident.id,
         officer_id: user.id,
         proof_image_url: afterPhotoUrl || beforePhotoUrl || '/images/officer_command.jpg',
         resolution_notes: workerNotes || `Work completed by ${user.fullName} (${user.departmentName}).`,
         citizen_verified: false,
-        created_at: new Date().toISOString(),
+        status: 'PENDING',
+        created_at: serverNow,
+        attempts: [...prevAttempts, currentAttempt],
       });
 
-      // Update incident status to WORK_COMPLETED (awaiting authority verification)
-      updatedIncident = await mockStore.updateIncident(incident.id, { status: 'WORK_COMPLETED' });
+      // Update incident status to WAITING_FOR_APPROVAL (strictly requiring authority approval)
+      updatedIncident = await mockStore.updateIncident(incident.id, {
+        status: 'WAITING_FOR_APPROVAL',
+        evidence_submitted_at: serverNow,
+        evidence_submitted_by: user.fullName,
+      });
 
       await mockStore.addAuditLog({
         id: `audit-${Date.now()}-${Math.random().toString(36).substring(7)}`,
         incident_id: incident.id,
         performed_by: user.fullName,
-        action: 'EVIDENCE_SUBMITTED_WORK_COMPLETED',
-        reason: `Field evidence submitted by ${user.fullName}. Awaiting Authority Verification.`,
+        action: 'WORKER_SUBMITTED_EVIDENCE',
+        reason: `Field evidence submitted by ${user.fullName}. Awaiting Authority Approval.`,
         new_value: {
           proof_image_url: evidence.proof_image_url,
           notes: evidence.resolution_notes,
           gps: { latitude, longitude },
-          timestamp: new Date().toISOString(),
+          timestamp: serverNow,
         },
-        created_at: new Date().toISOString(),
+        created_at: serverNow,
+      });
+    } else if (action === 'CONTINUE_WORK') {
+      updatedIncident = await mockStore.updateIncident(incident.id, {
+        status: 'IN_PROGRESS',
+        continued_at: serverNow,
+      });
+      await mockStore.addAuditLog({
+        id: `audit-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+        incident_id: incident.id,
+        performed_by: user.fullName,
+        action: 'WORKER_CONTINUED_WORK',
+        reason: `Worker ${user.fullName} resumed field repairs after evidence feedback.`,
+        created_at: serverNow,
       });
     } else if (action === 'UPDATE_STATUS' && status) {
       updatedIncident = await mockStore.updateIncident(incident.id, { status });

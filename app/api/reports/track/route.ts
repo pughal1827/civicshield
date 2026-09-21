@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
         reportRecord = mockStore.getReport(incidentId);
       }
 
-      if (['RESOLVED', 'CITIZEN_VERIFICATION', 'VERIFIED'].includes(incident.status)) {
+      if (['WAITING_FOR_APPROVAL', 'PENDING_CITIZEN_VERIFICATION', 'EVIDENCE_REJECTED', 'WORK_COMPLETED', 'RESOLVED', 'CITIZEN_VERIFICATION', 'VERIFIED', 'CLOSED', 'REOPENED'].includes(incident.status)) {
         resolutionInfo = mockStore.getResolutionEvidence(incidentId);
       }
     } else {
@@ -116,7 +116,7 @@ export async function GET(req: NextRequest) {
         }
 
         // 5. Fetch Resolution Evidence if applicable
-        if (['RESOLVED', 'CITIZEN_VERIFICATION', 'VERIFIED'].includes(incident.status)) {
+        if (['WAITING_FOR_APPROVAL', 'PENDING_CITIZEN_VERIFICATION', 'EVIDENCE_REJECTED', 'WORK_COMPLETED', 'RESOLVED', 'CITIZEN_VERIFICATION', 'VERIFIED', 'CLOSED', 'REOPENED'].includes(incident.status)) {
           const { data: resEv } = await supabase
             .from('resolution_evidence')
             .select('proof_image_url, resolution_notes, citizen_verified, citizen_feedback, created_at')
@@ -130,14 +130,15 @@ export async function GET(req: NextRequest) {
     }
 
     // 6. Build Progress Timeline
+    const activeStatus = incident.status;
     const sanitizedTimeline = [
       { step: 'SUBMITTED', label: 'Report Submitted', completed: true },
-      { step: 'AI_ANALYSED', label: 'AI Classified', completed: ['AI_ANALYSED', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'CITIZEN_VERIFICATION', 'VERIFIED'].includes(incident.status) },
-      { step: 'ASSIGNED', label: 'Department Assigned', completed: ['ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'CITIZEN_VERIFICATION', 'VERIFIED'].includes(incident.status) },
-      { step: 'IN_PROGRESS', label: 'Field Repair In Progress', completed: ['IN_PROGRESS', 'RESOLVED', 'CITIZEN_VERIFICATION', 'VERIFIED'].includes(incident.status) },
-      { step: 'RESOLVED', label: 'Repair Completed', completed: ['RESOLVED', 'CITIZEN_VERIFICATION', 'VERIFIED'].includes(incident.status) },
-      { step: 'CITIZEN_VERIFICATION', label: 'Awaiting Citizen Verification', completed: ['CITIZEN_VERIFICATION', 'VERIFIED'].includes(incident.status) },
-      { step: 'VERIFIED', label: 'Verified & Closed', completed: incident.status === 'VERIFIED' },
+      { step: 'AI_ANALYSED', label: 'AI Classified', completed: ['AI_ANALYSED', 'ASSIGNED', 'IN_PROGRESS', 'WAITING_FOR_APPROVAL', 'PENDING_CITIZEN_VERIFICATION', 'WORK_COMPLETED', 'RESOLVED', 'CITIZEN_VERIFICATION', 'VERIFIED', 'CLOSED', 'REOPENED'].includes(activeStatus) },
+      { step: 'ASSIGNED', label: 'Department Assigned', completed: ['ASSIGNED', 'IN_PROGRESS', 'WAITING_FOR_APPROVAL', 'PENDING_CITIZEN_VERIFICATION', 'WORK_COMPLETED', 'RESOLVED', 'CITIZEN_VERIFICATION', 'VERIFIED', 'CLOSED'].includes(activeStatus) },
+      { step: 'IN_PROGRESS', label: 'Field Repair In Progress', completed: ['IN_PROGRESS', 'WAITING_FOR_APPROVAL', 'PENDING_CITIZEN_VERIFICATION', 'WORK_COMPLETED', 'RESOLVED', 'CITIZEN_VERIFICATION', 'VERIFIED', 'CLOSED'].includes(activeStatus) },
+      { step: 'WAITING_FOR_APPROVAL', label: 'Field Evidence Submitted', completed: ['WAITING_FOR_APPROVAL', 'PENDING_CITIZEN_VERIFICATION', 'WORK_COMPLETED', 'RESOLVED', 'CITIZEN_VERIFICATION', 'VERIFIED', 'CLOSED'].includes(activeStatus) },
+      { step: 'PENDING_CITIZEN_VERIFICATION', label: 'Authority Approved Evidence (Pending Citizen Verification)', completed: ['PENDING_CITIZEN_VERIFICATION', 'RESOLVED', 'CITIZEN_VERIFICATION', 'VERIFIED', 'CLOSED'].includes(activeStatus) },
+      { step: 'CLOSED', label: 'Citizen Verified & Closed', completed: ['CLOSED', 'VERIFIED'].includes(activeStatus) },
     ];
 
     const departmentName = incident.departments ? (incident.departments as any).name : 'Road Maintenance & Infrastructure';

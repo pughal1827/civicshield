@@ -28,6 +28,8 @@ const submitReportSchema = z.object({
     'ILLEGAL_CONSTRUCTION',
   ]).optional(),
   imageUrl: z.string().optional().or(z.literal('')),
+  audioUrl: z.string().optional().or(z.literal('')),
+  reporterId: z.string().optional(),
   latitude: z.number().min(-90).max(90),
   longitude: z.number().min(-180).max(180),
   addressText: z.string().min(3, 'Address location is required.'),
@@ -38,13 +40,17 @@ export async function POST(req: NextRequest) {
     const storageConfig = getStorageConfig();
     const body = await req.json();
 
+    // Extract citizen identifier from headers or request payload
+    const citizenIdHeader = req.headers.get('x-user-id') || req.headers.get('x-citizen-id');
+
     // 1. Validate Input Payload
     const parseResult = submitReportSchema.safeParse(body);
     if (!parseResult.success) {
       return createErrorResponse('Invalid submission payload.', 'VALIDATION_ERROR', 400, parseResult.error.format());
     }
 
-    const { description, category: userCategory, imageUrl, latitude, longitude, addressText } = parseResult.data;
+    const { description, category: userCategory, imageUrl, audioUrl, reporterId, latitude, longitude, addressText } = parseResult.data;
+    const finalCitizenId = citizenIdHeader || reporterId || 'cit-101';
 
     // 2. Generate Tracking Code & Default Case ID
     const randomNum = Math.floor(1000 + Math.random() * 9000);
@@ -205,6 +211,7 @@ export async function POST(req: NextRequest) {
     if (storageConfig.isMock) {
       logger.info('SubmitAPI', `Storing new report in MOCK mode: ${caseId}`);
       const generatedId = `inc-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`;
+      const submissionTimestamp = new Date().toISOString();
 
       incident = mockStore.addIncident({
         id: generatedId,
@@ -214,7 +221,13 @@ export async function POST(req: NextRequest) {
         summary,
         category: finalCategory,
         severity: analysis.severity,
-        status: 'AI_ANALYSED',
+        status: 'SUBMITTED',
+        reporter_id: finalCitizenId,
+        reporterId: finalCitizenId,
+        citizen_id: finalCitizenId,
+        citizenId: finalCitizenId,
+        audio_url: audioUrl || null,
+        audioUrl: audioUrl || null,
         priority_score: priorityResult.priorityScore,
         priorityScore: priorityResult.priorityScore,
         priority_factors: {
@@ -236,25 +249,31 @@ export async function POST(req: NextRequest) {
         affected_citizens_count: 1,
         affectedCitizensCount: 1,
         is_duplicate_flagged: false,
-        created_at: new Date().toISOString(),
+        created_at: submissionTimestamp,
       });
 
       report = mockStore.addReport({
         id: `rep-${Date.now()}`,
         incident_id: generatedId,
         incidentId: generatedId,
+        citizen_id: finalCitizenId,
+        citizenId: finalCitizenId,
+        reporter_id: finalCitizenId,
+        reporterId: finalCitizenId,
         tracking_code: trackingCode,
         trackingCode,
         raw_description: description,
         rawDescription: description,
         image_url: imageUrl || null,
         imageUrl: imageUrl || null,
+        audio_url: audioUrl || null,
+        audioUrl: audioUrl || null,
         latitude,
         longitude,
         address_text: addressText,
         addressText,
         is_original_report: true,
-        created_at: new Date().toISOString(),
+        created_at: submissionTimestamp,
       });
 
       mockStore.addAiAnalysis({
@@ -269,7 +288,7 @@ export async function POST(req: NextRequest) {
           importantDetails: analysis.importantDetails,
           summary: analysis.summary,
         },
-        created_at: new Date().toISOString(),
+        created_at: submissionTimestamp,
       });
 
       if (embeddingVector) {
@@ -278,6 +297,7 @@ export async function POST(req: NextRequest) {
     } else {
       logger.info('SubmitAPI', `Storing new report in SUPABASE mode: ${caseId}`);
       const supabase = createAdminClient();
+      const submissionTimestamp = new Date().toISOString();
 
       // Ensure department exists in Supabase DB
       let dbDeptId: string | null = null;
@@ -319,7 +339,8 @@ export async function POST(req: NextRequest) {
             summary,
             category: dbCategory,
             severity: analysis.severity,
-            status: 'AI_ANALYSED',
+            status: 'SUBMITTED',
+            reporter_id: finalCitizenId,
             priority_score: priorityResult.priorityScore,
             priority_factors: {
               safetyRisk: priorityResult.factorScores.safetyRiskScore,
@@ -336,6 +357,7 @@ export async function POST(req: NextRequest) {
             report_count: 1,
             affected_citizens_count: 1,
             is_duplicate_flagged: false,
+            created_at: submissionTimestamp,
           })
           .select()
           .single();
@@ -351,13 +373,16 @@ export async function POST(req: NextRequest) {
           .from('reports')
           .insert({
             incident_id: incident.id,
+            citizen_id: finalCitizenId,
             tracking_code: trackingCode,
             raw_description: description,
             image_url: imageUrl || null,
+            audio_url: audioUrl || null,
             latitude,
             longitude,
             address_text: addressText,
             is_original_report: true,
+            created_at: submissionTimestamp,
           })
           .select()
           .single();
@@ -383,7 +408,13 @@ export async function POST(req: NextRequest) {
           summary,
           category: finalCategory,
           severity: analysis.severity,
-          status: 'AI_ANALYSED',
+          status: 'SUBMITTED',
+          reporter_id: finalCitizenId,
+          reporterId: finalCitizenId,
+          citizen_id: finalCitizenId,
+          citizenId: finalCitizenId,
+          audio_url: audioUrl || null,
+          audioUrl: audioUrl || null,
           priority_score: priorityResult.priorityScore,
           priorityScore: priorityResult.priorityScore,
           priority_factors: {
@@ -405,25 +436,31 @@ export async function POST(req: NextRequest) {
           affected_citizens_count: 1,
           affectedCitizensCount: 1,
           is_duplicate_flagged: false,
-          created_at: new Date().toISOString(),
+          created_at: submissionTimestamp,
         });
 
         report = mockStore.addReport({
           id: `rep-${Date.now()}`,
           incident_id: generatedId,
           incidentId: generatedId,
+          citizen_id: finalCitizenId,
+          citizenId: finalCitizenId,
+          reporter_id: finalCitizenId,
+          reporterId: finalCitizenId,
           tracking_code: trackingCode,
           trackingCode,
           raw_description: description,
           rawDescription: description,
           image_url: imageUrl || null,
           imageUrl: imageUrl || null,
+          audio_url: audioUrl || null,
+          audioUrl: audioUrl || null,
           latitude,
           longitude,
           address_text: addressText,
           addressText,
           is_original_report: true,
-          created_at: new Date().toISOString(),
+          created_at: submissionTimestamp,
         });
       }
     }

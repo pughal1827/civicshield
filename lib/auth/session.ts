@@ -1,5 +1,6 @@
 import { UserProfile, UserRole } from '@/types/user';
 import crypto from 'crypto';
+import { normalizeDepartmentCode } from '@/lib/constants/departments';
 
 export interface AuthSession {
   user: UserProfile;
@@ -200,6 +201,23 @@ seedDefaultUsers();
 export function getUserByEmail(email: string) {
   seedDefaultUsers();
   return userStore.get(email.toLowerCase().trim());
+}
+
+export function getWorkersByDepartment(deptCode?: string) {
+  seedDefaultUsers();
+  const workers: Array<UserProfile> = [];
+  const searchCode = deptCode ? normalizeDepartmentCode(deptCode) : null;
+
+  for (const user of userStore.values()) {
+    if (user.role === 'WORKER') {
+      const userDeptCode = normalizeDepartmentCode(user.departmentCode || user.departmentId || user.departmentName);
+      if (!searchCode || userDeptCode === searchCode) {
+        const { passwordHash: _, ...publicProfile } = user;
+        workers.push(publicProfile as UserProfile);
+      }
+    }
+  }
+  return workers;
 }
 
 export function registerCitizenUser(fullName: string, email: string, rawPassword: string): UserProfile {

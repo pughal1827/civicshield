@@ -23,28 +23,12 @@ export default function WorkerNotificationsPage() {
 
   const notifications = [
     {
-      id: 'notif-1',
-      title: `🔔 New Job Assigned to ${deptName}`,
-      message: `Case CS-8717 (Broken Streetlight Repair) was assigned by Authority Command to ${deptName}.`,
-      time: '10 mins ago',
+      id: 'notif-case-001',
+      title: `🔔 Job Notification for ${deptName}`,
+      message: `Case CASE-001 (Deep Pothole Asphalt Repair) is assigned to ${deptName}.`,
+      time: 'Just now',
       unread: true,
-      href: '/worker/jobs/inc-1789481251454-969',
-    },
-    {
-      id: 'notif-2',
-      title: '🔴 Urgent Priority Alert',
-      message: `Pothole repair CS-9120 score elevated to HIGH (85/100). Dispatch requested.`,
-      time: '1 hour ago',
-      unread: true,
-      href: '/worker/jobs/task-002',
-    },
-    {
-      id: 'notif-3',
-      title: '✅ Evidence Verified by Authority',
-      message: `Resolution proof for CS-6402 approved. Job marked RESOLVED.`,
-      time: 'Yesterday',
-      unread: false,
-      href: '/worker/jobs/task-003',
+      href: '/worker/jobs/inc-case-001',
     },
   ];
 

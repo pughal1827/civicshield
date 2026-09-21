@@ -6,7 +6,7 @@ import { getStorageConfig, ProductionDatabaseError } from '@/lib/db/storage-conf
 import { createErrorResponse, createSuccessResponse } from '@/lib/utils/api-error';
 
 const verifySchema = z.object({
-  trackingCode: z.string().uuid('Invalid tracking code format.'),
+  trackingCode: z.string().min(1, 'Tracking code or Case ID is required.'),
   action: z.enum(['ACCEPT', 'REJECT']),
   feedback: z.string().optional(),
 });
@@ -27,30 +27,38 @@ export async function POST(req: NextRequest) {
     let incident: any = null;
 
     if (config.isMock) {
-      const mockRep = mockStore.getReport(trackingCode);
-      if (!mockRep || !mockRep.incident_id) {
-        return createErrorResponse('Unauthorized: Invalid or unknown tracking code.', 'UNAUTHORIZED', 401);
-      }
-      const incIdStr = String(mockRep.incident_id);
-      targetIncidentId = incIdStr;
-      incident = mockStore.getIncident(incIdStr);
-      if (!incident) {
-        return createErrorResponse('Associated incident record not found.', 'NOT_FOUND', 404);
+      const foundRep = mockStore.getReport(trackingCode);
+      const foundInc = mockStore.getIncident(trackingCode);
+
+      if (foundRep && (foundRep.incident_id || foundRep.incidentId)) {
+        targetIncidentId = String(foundRep.incident_id || foundRep.incidentId);
+        incident = mockStore.getIncident(targetIncidentId);
+      } else if (foundInc) {
+        incident = foundInc;
+        targetIncidentId = foundInc.id;
       }
     } else {
       const supabase = createAdminClient();
       try {
-        const { data: repData, error: repErr } = await supabase.from('reports').select('id, incident_id').eq('tracking_code', trackingCode).single();
-        if (repErr || !repData || !repData.incident_id) {
-          return createErrorResponse('Unauthorized: Invalid or unknown tracking code.', 'UNAUTHORIZED', 401);
+        // 1. Try matching by tracking_code
+        let repId: string | null = null;
+        const { data: repData } = await supabase.from('reports').select('id, incident_id').eq('tracking_code', trackingCode).maybeSingle();
+        if (repData && repData.incident_id) {
+          repId = repData.incident_id;
         }
-        targetIncidentId = repData.incident_id;
 
-        const { data: incData, error: incErr } = await supabase.from('incidents').select('id, case_id, status').eq('id', targetIncidentId).single();
-        if (incErr || !incData) {
-          return createErrorResponse('Associated incident record not found.', 'NOT_FOUND', 404);
+        // 2. Try matching by Case ID or incident ID if report not found directly
+        if (repId) {
+          targetIncidentId = repId;
+          const { data: incData } = await supabase.from('incidents').select('id, case_id, status').eq('id', targetIncidentId).maybeSingle();
+          incident = incData;
+        } else {
+          const { data: incData } = await supabase.from('incidents').select('id, case_id, status').or(`id.eq.${trackingCode},case_id.ilike.${trackingCode}`).maybeSingle();
+          if (incData) {
+            incident = incData;
+            targetIncidentId = incData.id;
+          }
         }
-        incident = incData;
       } catch (dbErr) {
         return createErrorResponse('Service temporarily unavailable. Database query failed.', 'SERVICE_UNAVAILABLE', 503);
       }
@@ -61,24 +69,54 @@ export async function POST(req: NextRequest) {
     }
 
     const validIncidentId: string = targetIncidentId;
+    const serverNow = new Date().toISOString();
 
     if (action === 'ACCEPT') {
+      const updateData = {
+        status: 'CLOSED',
+        citizenVerifiedBy: 'Citizen (Case Owner)',
+        citizen_verified_by: 'Citizen (Case Owner)',
+        citizenVerifiedAt: serverNow,
+        citizen_verified_at: serverNow,
+        changedBy: 'Citizen',
+        changed_by: 'Citizen',
+        changedAt: serverNow,
+        changed_at: serverNow,
+        resolved_at: serverNow,
+        resolvedAt: serverNow,
+      };
+
       if (config.isMock) {
-        mockStore.updateIncident(validIncidentId, { status: 'VERIFIED', resolved_at: new Date().toISOString() });
+        mockStore.updateIncident(validIncidentId, updateData);
         const existingEv = mockStore.getResolutionEvidence(validIncidentId);
         if (existingEv) {
-          mockStore.setResolutionEvidence({ ...existingEv, citizen_verified: true, citizen_feedback: feedback || 'Citizen confirmed issue resolution.' });
+          mockStore.setResolutionEvidence({
+            ...existingEv,
+            citizen_verified: true,
+            status: 'CLOSED',
+            citizen_feedback: feedback || 'Citizen confirmed issue resolution.',
+          });
         }
+        mockStore.addAuditLog({
+          id: `audit_${Date.now()}`,
+          incident_id: validIncidentId,
+          performed_by: 'Citizen',
+          action: 'CITIZEN_APPROVED_RESOLUTION',
+          old_value: { status: incident.status },
+          new_value: { status: 'CLOSED', citizenVerifiedBy: 'Citizen (Case Owner)' },
+          reason: feedback || 'Citizen confirmed issue was resolved to satisfaction.',
+          created_at: serverNow,
+        });
       } else {
         const supabase = createAdminClient();
         try {
-          await supabase.from('incidents').update({ status: 'VERIFIED', resolved_at: new Date().toISOString() }).eq('id', validIncidentId);
+          await supabase.from('incidents').update(updateData).eq('id', validIncidentId);
           await supabase.from('resolution_evidence').update({ citizen_verified: true, citizen_feedback: feedback || 'Citizen confirmed issue resolution.' }).eq('incident_id', validIncidentId);
           await supabase.from('audit_logs').insert({
             incident_id: validIncidentId,
-            action: 'CITIZEN_VERIFIED_RESOLUTION',
+            action: 'CITIZEN_APPROVED_RESOLUTION',
             old_value: { status: incident.status },
-            new_value: { status: 'VERIFIED', citizen_verified: true },
+            new_value: { status: 'CLOSED', citizen_verified: true },
             reason: feedback || 'Citizen confirmed issue was resolved to satisfaction.',
           });
         } catch (dbErr) {
@@ -88,28 +126,63 @@ export async function POST(req: NextRequest) {
 
       return createSuccessResponse({
         action: 'ACCEPT',
-        caseId: incident.case_id,
-        status: 'VERIFIED',
+        caseId: incident.case_id || incident.caseId,
+        status: 'CLOSED',
         message: 'Thank you! Your civic issue has been verified as resolved and closed.',
       });
     } else {
+      // REJECT ACTION
+      const rejectionReasonText = feedback?.trim();
+      if (!rejectionReasonText) {
+        return createErrorResponse('Citizen rejection reason is required.', 'VALIDATION_ERROR', 400);
+      }
+
+      const updateData = {
+        status: 'REOPENED',
+        citizenRejectionReason: rejectionReasonText,
+        citizen_rejection_reason: rejectionReasonText,
+        rejectedBy: 'Citizen',
+        rejected_by: 'Citizen',
+        rejectedAt: serverNow,
+        rejected_at: serverNow,
+        changedBy: 'Citizen',
+        changed_by: 'Citizen',
+        changedAt: serverNow,
+        changed_at: serverNow,
+      };
+
       if (config.isMock) {
-        mockStore.updateIncident(validIncidentId, { status: 'IN_PROGRESS' });
+        mockStore.updateIncident(validIncidentId, updateData);
         const existingEv = mockStore.getResolutionEvidence(validIncidentId);
         if (existingEv) {
-          mockStore.setResolutionEvidence({ ...existingEv, citizen_verified: false, citizen_feedback: feedback || 'Citizen reported issue is still not resolved.' });
+          mockStore.setResolutionEvidence({
+            ...existingEv,
+            citizen_verified: false,
+            status: 'REOPENED',
+            citizen_feedback: rejectionReasonText,
+          });
         }
+        mockStore.addAuditLog({
+          id: `audit_${Date.now()}`,
+          incident_id: validIncidentId,
+          performed_by: 'Citizen',
+          action: 'CITIZEN_REJECTED_RESOLUTION_REOPENED',
+          old_value: { status: incident.status },
+          new_value: { status: 'REOPENED', citizenRejectionReason: rejectionReasonText },
+          reason: `Citizen rejected resolution: "${rejectionReasonText}". Reopened for Authority and Worker action.`,
+          created_at: serverNow,
+        });
       } else {
         const supabase = createAdminClient();
         try {
-          await supabase.from('incidents').update({ status: 'IN_PROGRESS' }).eq('id', validIncidentId);
-          await supabase.from('resolution_evidence').update({ citizen_verified: false, citizen_feedback: feedback || 'Citizen reported issue is still not resolved.' }).eq('incident_id', validIncidentId);
+          await supabase.from('incidents').update(updateData).eq('id', validIncidentId);
+          await supabase.from('resolution_evidence').update({ citizen_verified: false, citizen_feedback: rejectionReasonText }).eq('incident_id', validIncidentId);
           await supabase.from('audit_logs').insert({
             incident_id: validIncidentId,
             action: 'CITIZEN_REJECTED_RESOLUTION_REOPENED',
             old_value: { status: incident.status },
-            new_value: { status: 'IN_PROGRESS', citizen_verified: false },
-            reason: feedback || 'Citizen reported issue remains unresolved; work order reopened.',
+            new_value: { status: 'REOPENED', citizen_verified: false },
+            reason: `Citizen rejected resolution: "${rejectionReasonText}". Reopened for Authority and Worker action.`,
           });
         } catch (dbErr) {
           return createErrorResponse('Service temporarily unavailable. Database update failed.', 'SERVICE_UNAVAILABLE', 503);
@@ -118,9 +191,10 @@ export async function POST(req: NextRequest) {
 
       return createSuccessResponse({
         action: 'REJECT',
-        caseId: incident.case_id,
-        status: 'IN_PROGRESS',
-        message: 'Your feedback has been recorded. The issue has been reopened for field team inspection.',
+        caseId: incident.case_id || incident.caseId,
+        status: 'REOPENED',
+        rejectionReason: rejectionReasonText,
+        message: 'Your feedback has been recorded. The issue has been reopened for Authority and field team action.',
       });
     }
   } catch (error) {
