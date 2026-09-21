@@ -9,14 +9,19 @@ import { MobileBottomNav } from '@/components/shared/bottom-nav';
 export function CitizenLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
-  // Public & authority routes keep the layout shell but hide citizen chrome
+  // Public, worker & authority routes must NEVER render citizen sidebar or chrome
   const isStandaloneRoute =
     pathname === '/' ||
     pathname === '/login' ||
     pathname === '/signup' ||
     pathname === '/about' ||
     pathname === '/how-it-works' ||
-    pathname.startsWith('/authority');
+    pathname.startsWith('/authority') ||
+    pathname.startsWith('/worker');
+
+  if (isStandaloneRoute) {
+    return <>{children}</>;
+  }
 
   return (
     <div className="flex min-h-screen bg-slate-100/90 font-sans text-slate-800 antialiased selection:bg-emerald-500/20 selection:text-emerald-800">
