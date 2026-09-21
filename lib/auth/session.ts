@@ -89,6 +89,110 @@ function seedDefaultUsers() {
     createdAt: new Date(Date.now() - 90 * 24 * 3600 * 1000).toISOString(),
     passwordHash: hashPassword('admin123'),
   });
+
+  // 1. Road Maintenance Worker
+  userStore.set('road.worker@civicshield.demo', {
+    id: 'user-worker-road-001',
+    email: 'road.worker@civicshield.demo',
+    fullName: 'Alex Rivera (Road Maintenance Lead)',
+    role: 'WORKER',
+    departmentId: 'dept_roads',
+    departmentCode: 'ROAD_MAINT',
+    departmentName: 'Road Maintenance',
+    createdAt: new Date(Date.now() - 45 * 24 * 3600 * 1000).toISOString(),
+    passwordHash: hashPassword('Worker@123'),
+  });
+
+  // 2. Electrical Worker
+  userStore.set('electrical.worker@civicshield.demo', {
+    id: 'user-worker-elec-001',
+    email: 'electrical.worker@civicshield.demo',
+    fullName: 'Marcus Vance (Electrical Field Lead)',
+    role: 'WORKER',
+    departmentId: '33333333-3333-3333-3333-333333333333',
+    departmentCode: 'ELECTRICAL',
+    departmentName: 'Electrical',
+    createdAt: new Date(Date.now() - 45 * 24 * 3600 * 1000).toISOString(),
+    passwordHash: hashPassword('Worker@123'),
+  });
+
+  // Legacy alias for electrical worker
+  userStore.set('worker@civicshield.gov', {
+    id: 'user-worker-elec-001',
+    email: 'worker@civicshield.gov',
+    fullName: 'Marcus Vance (Electrical Field Lead)',
+    role: 'WORKER',
+    departmentId: '33333333-3333-3333-3333-333333333333',
+    departmentCode: 'ELECTRICAL',
+    departmentName: 'Electrical',
+    createdAt: new Date(Date.now() - 45 * 24 * 3600 * 1000).toISOString(),
+    passwordHash: hashPassword('worker123'),
+  });
+
+  // 3. Garbage / Sanitation Worker
+  userStore.set('garbage.worker@civicshield.demo', {
+    id: 'user-worker-sanitation-001',
+    email: 'garbage.worker@civicshield.demo',
+    fullName: 'Suresh Kumar (Sanitation Inspector)',
+    role: 'WORKER',
+    departmentId: '22222222-2222-2222-2222-222222222222',
+    departmentCode: 'SANITATION',
+    departmentName: 'Garbage / Sanitation',
+    createdAt: new Date(Date.now() - 45 * 24 * 3600 * 1000).toISOString(),
+    passwordHash: hashPassword('Worker@123'),
+  });
+
+  // 4. Water Worker
+  userStore.set('water.worker@civicshield.demo', {
+    id: 'user-worker-water-001',
+    email: 'water.worker@civicshield.demo',
+    fullName: 'Elena Rostova (Water Resources Engineer)',
+    role: 'WORKER',
+    departmentId: '44444444-4444-4444-4444-444444444444',
+    departmentCode: 'WATER_DEPT',
+    departmentName: 'Water',
+    createdAt: new Date(Date.now() - 45 * 24 * 3600 * 1000).toISOString(),
+    passwordHash: hashPassword('Worker@123'),
+  });
+
+  // 5. Drainage Worker
+  userStore.set('drainage.worker@civicshield.demo', {
+    id: 'user-worker-drainage-001',
+    email: 'drainage.worker@civicshield.demo',
+    fullName: "David O'Connor (Drainage Crew Lead)",
+    role: 'WORKER',
+    departmentId: 'dept_drainage',
+    departmentCode: 'DRAINAGE',
+    departmentName: 'Drainage',
+    createdAt: new Date(Date.now() - 45 * 24 * 3600 * 1000).toISOString(),
+    passwordHash: hashPassword('Worker@123'),
+  });
+
+  // 6. Traffic Worker
+  userStore.set('traffic.worker@civicshield.demo', {
+    id: 'user-worker-traffic-001',
+    email: 'traffic.worker@civicshield.demo',
+    fullName: 'Priya Sharma (Traffic Signals Specialist)',
+    role: 'WORKER',
+    departmentId: 'dept_traffic',
+    departmentCode: 'TRAFFIC',
+    departmentName: 'Traffic',
+    createdAt: new Date(Date.now() - 45 * 24 * 3600 * 1000).toISOString(),
+    passwordHash: hashPassword('Worker@123'),
+  });
+
+  // 7. Public Works Worker
+  userStore.set('publicworks.worker@civicshield.demo', {
+    id: 'user-worker-pw-001',
+    email: 'publicworks.worker@civicshield.demo',
+    fullName: 'Carlos Mendez (Public Infrastructure Engineer)',
+    role: 'WORKER',
+    departmentId: 'dept_publicworks',
+    departmentCode: 'PUBLIC_WORKS',
+    departmentName: 'Public Works',
+    createdAt: new Date(Date.now() - 45 * 24 * 3600 * 1000).toISOString(),
+    passwordHash: hashPassword('Worker@123'),
+  });
 }
 
 seedDefaultUsers();

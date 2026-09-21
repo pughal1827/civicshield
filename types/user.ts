@@ -1,4 +1,4 @@
-export type UserRole = 'CITIZEN' | 'AUTHORITY' | 'ADMIN';
+export type UserRole = 'CITIZEN' | 'AUTHORITY' | 'ADMIN' | 'WORKER';
 
 export interface Department {
   id: string;
@@ -15,6 +15,8 @@ export interface UserProfile {
   phone?: string;
   role: UserRole;
   departmentId?: string;
+  departmentCode?: string;
+  departmentName?: string;
   department?: Department;
   createdAt: string;
 }

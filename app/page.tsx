@@ -19,7 +19,10 @@ import {
   FileCheck,
   CheckCircle2,
   Sparkles,
-  Leaf
+  Leaf,
+  HardHat,
+  ClipboardList,
+  RefreshCw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -100,7 +103,7 @@ export default function LandingRoleSelectionPage() {
       </header>
 
       {/* MAIN CONTAINER */}
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8 sm:space-y-12 z-10">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8 sm:space-y-12 z-10">
 
         {/* HERO SECTION */}
         <section className="text-center space-y-3 sm:space-y-4 max-w-3xl mx-auto">
@@ -122,8 +125,8 @@ export default function LandingRoleSelectionPage() {
           </p>
         </section>
 
-        {/* TWO CARDS (CITIZEN & AUTHORITY) */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 max-w-5xl mx-auto items-stretch">
+        {/* THREE CARDS (CITIZEN, AUTHORITY, & DEPARTMENT WORKER) */}
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-6 max-w-7xl mx-auto items-stretch">
           
           {/* LEFT CARD: CITIZEN LOGIN */}
           <div className="bg-white/95 backdrop-blur-md rounded-3xl border-2 border-emerald-100 hover:border-emerald-300 p-6 sm:p-8 flex flex-col justify-between shadow-xl shadow-emerald-950/5 hover:shadow-2xl hover:shadow-emerald-600/10 transition-all group relative overflow-hidden">
@@ -200,7 +203,7 @@ export default function LandingRoleSelectionPage() {
 
           </div>
 
-          {/* RIGHT CARD: AUTHORITY LOGIN */}
+          {/* MIDDLE CARD: AUTHORITY LOGIN */}
           <div className="bg-white/95 backdrop-blur-md rounded-3xl border-2 border-slate-200 hover:border-blue-300 p-6 sm:p-8 flex flex-col justify-between shadow-xl shadow-slate-900/5 hover:shadow-2xl hover:shadow-blue-600/10 transition-all group relative overflow-hidden">
             
             <div className="space-y-5">
@@ -269,6 +272,81 @@ export default function LandingRoleSelectionPage() {
               <div className="text-center">
                 <span className="text-[11px] font-semibold text-slate-500">
                   Municipal Officers, Ward Inspectors & Admin Personnel
+                </span>
+              </div>
+            </div>
+
+          </div>
+
+          {/* RIGHT CARD: DEPARTMENT WORKER LOGIN */}
+          <div className="bg-white/95 backdrop-blur-md rounded-3xl border-2 border-slate-200 hover:border-orange-300 p-6 sm:p-8 flex flex-col justify-between shadow-xl shadow-slate-900/5 hover:shadow-2xl hover:shadow-orange-600/10 transition-all group relative overflow-hidden">
+            
+            <div className="space-y-5">
+              
+              {/* Image Container with Floating Badge */}
+              <div className="relative h-48 sm:h-52 w-full rounded-2xl overflow-hidden border border-orange-100/80 shadow-inner bg-orange-50">
+                <Image
+                  src="/images/worker_field_hero.jpg"
+                  alt="Department field worker wearing safety gear"
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  priority
+                />
+
+                {/* Floating Orange Circle Badge */}
+                <div className="absolute top-3 left-3 h-12 w-12 rounded-full bg-orange-500 text-white flex items-center justify-center shadow-lg shadow-orange-900/30 border-2 border-white">
+                  <HardHat className="h-6 w-6" />
+                </div>
+              </div>
+
+              {/* Title & Description */}
+              <div className="space-y-1.5">
+                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Department Worker Login</h2>
+                <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                  View assigned tasks, update work progress, and submit on-ground evidence to keep the city clean and functional.
+                </p>
+              </div>
+
+              {/* Feature List */}
+              <ul className="space-y-2.5 text-xs text-slate-700 font-bold">
+                <li className="flex items-center gap-3">
+                  <div className="h-7 w-7 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
+                    <ClipboardList className="h-4 w-4" />
+                  </div>
+                  <span>View Assigned Tasks</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <div className="h-7 w-7 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
+                    <RefreshCw className="h-4 w-4" />
+                  </div>
+                  <span>Update Work Status</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <div className="h-7 w-7 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
+                    <Camera className="h-4 w-4" />
+                  </div>
+                  <span>Upload Before/After Photos</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <div className="h-7 w-7 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="h-4 w-4" />
+                  </div>
+                  <span>Mark Task as Completed</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="pt-6 space-y-3 border-t border-slate-100 mt-6">
+              <Link href="/worker/login" className="block w-full">
+                <Button className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-extrabold text-sm rounded-2xl shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2 group-hover:gap-3 transition-all">
+                  <span>Login as Worker</span>
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+              <div className="text-center">
+                <span className="text-[11px] font-bold text-orange-600">
+                  Field Staff, Engineers & Department Personnel
                 </span>
               </div>
             </div>

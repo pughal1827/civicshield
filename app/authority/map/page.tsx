@@ -1,8 +1,10 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import React, { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
-import dynamic from 'next/dynamic';
+import dynamicImport from 'next/dynamic';
 import {
   Map as MapIcon,
   MapPin,
@@ -27,10 +29,10 @@ import {
   Navigation,
 } from 'lucide-react';
 import { LoadingState } from '@/components/ui/loading-state';
-import { CATEGORY_CONFIG, SEVERITY_COLORS } from '@/components/maps/incident-cluster-map';
+import { CATEGORY_CONFIG, SEVERITY_COLORS } from '@/lib/maps/map-config';
 
 // Dynamically import Leaflet Map to avoid SSR issues
-const IncidentClusterMap = dynamic(
+const IncidentClusterMap = dynamicImport(
   () => import('@/components/maps/incident-cluster-map').then((mod) => mod.IncidentClusterMap),
   {
     ssr: false,

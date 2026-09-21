@@ -6,7 +6,7 @@ import { createErrorResponse, createSuccessResponse } from '@/lib/utils/api-erro
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address.'),
   password: z.string().min(1, 'Password is required.'),
-  portal: z.enum(['CITIZEN', 'AUTHORITY']).optional(),
+  portal: z.enum(['CITIZEN', 'AUTHORITY', 'WORKER']).optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -39,10 +39,10 @@ export async function POST(req: NextRequest) {
     }
 
     // Portal Access Verification
-    if (portal === 'AUTHORITY' && userWithPassword.role === 'CITIZEN') {
-      console.warn(`[Security Alert] Citizen ${email} attempted to log into Authority Portal.`);
+    if ((portal === 'AUTHORITY' || portal === 'WORKER') && userWithPassword.role === 'CITIZEN') {
+      console.warn(`[Security Alert] Citizen ${email} attempted to log into ${portal} Portal.`);
       return createErrorResponse(
-        'Access Denied: This portal is restricted to authorized municipal personnel only.',
+        'Access Denied: This portal is restricted to authorized department personnel only.',
         'FORBIDDEN',
         403
       );

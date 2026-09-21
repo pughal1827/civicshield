@@ -102,6 +102,15 @@ export default function CitizenDashboardPage() {
           setAllIncidents(list);
           if (list.length > 0) {
             setSelectedIncident(list[0]);
+            // If local storage has no saved reports for this session, display all live server reports
+            try {
+              const savedStr = localStorage.getItem('civicshield_my_reports');
+              if (!savedStr || JSON.parse(savedStr).length === 0) {
+                setUserReports(list);
+              }
+            } catch {
+              setUserReports(list);
+            }
           }
         }
       })
