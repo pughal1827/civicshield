@@ -30,12 +30,12 @@ interface DepartmentItem {
 }
 
 const DEFAULT_DEPARTMENTS: DepartmentItem[] = [
-  { id: '11111111-1111-1111-1111-111111111111', name: 'Road Maintenance', code: 'ROAD_MAINT' },
-  { id: '22222222-2222-2222-2222-222222222222', name: 'Sanitation', code: 'SANITATION' },
-  { id: '33333333-3333-3333-3333-333333333333', name: 'Electrical & Streetlights', code: 'ELECTRICAL' },
-  { id: '44444444-4444-4444-4444-444444444444', name: 'Water & Sewage', code: 'WATER_SEWER' },
-  { id: '55555555-5555-5555-5555-555555555555', name: 'Drainage Systems', code: 'DRAINAGE' },
-  { id: '66666666-6666-6666-6666-666666666666', name: 'Traffic Signals & Signs', code: 'TRAFFIC' },
+  { id: '11111111-1111-1111-1111-111111111111', name: 'Road Maintenance & Infrastructure', code: 'ROAD_MAINT' },
+  { id: '22222222-2222-2222-2222-222222222222', name: 'Sanitation & Waste Management', code: 'SANITATION' },
+  { id: '33333333-3333-3333-3333-333333333333', name: 'Electrical & Street Lighting', code: 'ELECTRICAL' },
+  { id: '44444444-4444-4444-4444-444444444444', name: 'Water Supply & Quality Board', code: 'WATER_DEPT' },
+  { id: '55555555-5555-5555-5555-555555555555', name: 'Drainage & Sewerage Department', code: 'DRAINAGE' },
+  { id: '66666666-6666-6666-6666-666666666666', name: 'Traffic Signals & Safety Division', code: 'TRAFFIC' },
   { id: '77777777-7777-7777-7777-777777777777', name: 'Public Works & Buildings', code: 'PUBLIC_WORKS' },
 ];
 
@@ -67,10 +67,16 @@ export default function ComplaintDetailsPage({ params }: { params: Promise<{ id:
       if (json.success && json.data) {
         setIncidentData(json.data);
         const inc = json.data.incident;
-        if (inc.department_id || inc.departmentId) {
-          setSelectedDeptId(inc.department_id || inc.departmentId);
+        const ai = json.data.aiAnalysis;
+        let deptId = inc.department_id || inc.departmentId;
+        if (!deptId && ai?.suggested_department_code) {
+          const match = DEFAULT_DEPARTMENTS.find(
+            (d) => d.code === ai.suggested_department_code || ai.suggested_department_code.startsWith(d.code)
+          );
+          if (match) deptId = match.id;
         }
-        setCustomSeverity(inc.severity || 'HIGH');
+        setSelectedDeptId(deptId || DEFAULT_DEPARTMENTS[0].id);
+        setCustomSeverity(inc.severity || ai?.detected_severity || 'HIGH');
         setCustomStatus(inc.status || 'SUBMITTED');
       } else {
         throw new Error(json.error?.message || 'Unable to parse complaint response.');
@@ -404,47 +410,84 @@ export default function ComplaintDetailsPage({ params }: { params: Promise<{ id:
         {/* Right Column (5 cols): AI Analysis & Officer Cross-Check */}
         <div className="lg:col-span-5 space-y-6">
           {/* AI Analysis Box */}
-          <div className="bg-gradient-to-br from-sky-900 to-slate-900 text-white rounded-2xl p-6 space-y-4 shadow-md">
-            <div className="flex items-center justify-between border-b border-sky-800/80 pb-3">
+          <div className="bg-gradient-to-br from-slate-900 via-sky-950 to-slate-900 text-white rounded-2xl p-6 space-y-4 shadow-lg border border-sky-900/60">
+            <div className="flex items-center justify-between border-b border-sky-800/60 pb-3">
               <div className="flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-sky-400 animate-pulse" />
-                <h2 className="text-sm font-bold uppercase tracking-wider">AI Analysis Engine</h2>
+                <h2 className="text-sm font-extrabold uppercase tracking-wider">AI Analysis Engine</h2>
               </div>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-sky-500/30 text-sky-300 border border-sky-400/40">
-                Confidence 94%
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-sky-500/20 text-sky-300 border border-sky-400/40">
+                Confidence {Math.round((aiAnalysis?.confidence_score ?? aiAnalysis?.confidence ?? 0.92) <= 1 ? (aiAnalysis?.confidence_score ?? aiAnalysis?.confidence ?? 0.92) * 100 : (aiAnalysis?.confidence_score ?? aiAnalysis?.confidence ?? 92))}%
               </span>
             </div>
 
-            <div className="space-y-3 text-xs">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-slate-950/60 p-3 rounded-xl border border-sky-800/60">
+            <div className="space-y-3.5 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="bg-slate-950/70 p-3 rounded-xl border border-sky-900/60">
                   <span className="text-[10px] font-bold text-sky-300 uppercase block">Detected Problem</span>
-                  <span className="text-white font-bold text-sm block mt-0.5">
-                    {aiAnalysis?.category?.replace('_', ' ') || incident.category?.replace('_', ' ') || 'Road Pothole'}
+                  <span className="text-white font-extrabold text-sm block mt-0.5">
+                    {(aiAnalysis?.detected_category || aiAnalysis?.category || incident.category || 'Road Pothole').replace(/_/g, ' ')}
                   </span>
                 </div>
-                <div className="bg-slate-950/60 p-3 rounded-xl border border-sky-800/60">
-                  <span className="text-[10px] font-bold text-sky-300 uppercase block">AI Dept Suggestion</span>
-                  <span className="text-sky-300 font-bold text-sm block mt-0.5">
-                    {aiAnalysis?.recommended_department_code || 'Road Maintenance'}
+                <div className="bg-slate-950/70 p-3 rounded-xl border border-sky-900/60">
+                  <span className="text-[10px] font-bold text-sky-300 uppercase block">AI Dept Routing</span>
+                  <span className="text-sky-300 font-extrabold text-sm block mt-0.5 truncate">
+                    {aiAnalysis?.suggested_department_name || incident.departments?.name || incident.departmentName || 'Road Maintenance & Infrastructure'}
                   </span>
                 </div>
               </div>
 
+              {/* Dynamic Metric Gauges */}
               <div className="grid grid-cols-3 gap-2">
-                <div className="bg-slate-950/60 p-2.5 rounded-xl border border-sky-800/60 text-center">
+                <div className="bg-slate-950/70 p-2.5 rounded-xl border border-sky-900/60 text-center">
                   <span className="text-[10px] font-bold text-sky-300 uppercase block">Severity</span>
-                  <span className="text-amber-400 font-black text-base">{incident.severity || 'HIGH'}</span>
+                  <span
+                    className={`font-black text-sm sm:text-base ${
+                      (incident.severity || aiAnalysis?.detected_severity) === 'CRITICAL'
+                        ? 'text-rose-400'
+                        : (incident.severity || aiAnalysis?.detected_severity) === 'HIGH'
+                        ? 'text-amber-400'
+                        : 'text-emerald-400'
+                    }`}
+                  >
+                    {incident.severity || aiAnalysis?.detected_severity || 'HIGH'}
+                  </span>
                 </div>
-                <div className="bg-slate-950/60 p-2.5 rounded-xl border border-sky-800/60 text-center">
+                <div className="bg-slate-950/70 p-2.5 rounded-xl border border-sky-900/60 text-center">
                   <span className="text-[10px] font-bold text-sky-300 uppercase block">Safety Risk</span>
-                  <span className="text-rose-400 font-black text-base">85%</span>
+                  <span className="text-rose-400 font-black text-sm sm:text-base">
+                    {aiAnalysis?.safety_risk_score ?? aiAnalysis?.safetyRiskScore ?? incident.priority_factors?.safetyRisk ?? 76}%
+                  </span>
                 </div>
-                <div className="bg-slate-950/60 p-2.5 rounded-xl border border-sky-800/60 text-center">
+                <div className="bg-slate-950/70 p-2.5 rounded-xl border border-sky-900/60 text-center">
                   <span className="text-[10px] font-bold text-sky-300 uppercase block">Public Impact</span>
-                  <span className="text-emerald-400 font-black text-base">High</span>
+                  <span className="text-emerald-400 font-black text-sm sm:text-base">
+                    {aiAnalysis?.public_impact || ((incident.report_count || 1) > 1 ? 'Critical' : 'High')}
+                  </span>
                 </div>
               </div>
+
+              {/* Extracted AI Keywords */}
+              {aiAnalysis?.extracted_keywords && aiAnalysis.extracted_keywords.length > 0 && (
+                <div className="bg-slate-950/70 p-2.5 rounded-xl border border-sky-900/60 space-y-1">
+                  <span className="text-[10px] font-bold text-sky-300 uppercase block">Detected NLP Keywords</span>
+                  <div className="flex flex-wrap gap-1">
+                    {aiAnalysis.extracted_keywords.map((kw: string, i: number) => (
+                      <span key={i} className="px-2 py-0.5 rounded-md bg-sky-900/60 border border-sky-700/60 text-[10px] font-mono text-sky-200">
+                        {kw}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* AI Diagnostic Reasoning */}
+              {aiAnalysis?.reasoning && (
+                <div className="bg-sky-950/40 p-3 rounded-xl border border-sky-800/40 text-[11px] text-sky-200 leading-relaxed font-medium">
+                  <span className="font-bold text-sky-300 block mb-0.5">AI Diagnostic Summary:</span>
+                  {aiAnalysis.reasoning}
+                </div>
+              )}
             </div>
           </div>
 

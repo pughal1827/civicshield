@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CivicShield — Clustering Architecture</title>
+<style>
+  @page { size: A4; margin: 12mm 14mm 12mm 14mm; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: 8.5pt;
+    line-height: 1.42;
+    color: #1a1a2e;
+    background: #fff;
+  }
+  .header {
+    display: flex; align-items: center; gap: 10px;
+    border-bottom: 2.5px solid #0f3460;
+    padding-bottom: 6px; margin-bottom: 8px;
+  }
+  .logo {
+    width: 32px; height: 32px; background: #0f3460; border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 700; font-size: 14px;
+  }
+  .header h1 { font-size: 14pt; color: #0f3460; }
+  .header .sub { font-size: 7.5pt; color: #666; margin-top: 1px; }
+  .two-col { display: flex; gap: 10px; margin-bottom: 7px; }
+  .col { flex: 1; }
+  .card {
+    border: 1px solid #dce3eb; border-radius: 6px;
+    padding: 6px 8px; margin-bottom: 6px; background: #f8fafc;
+  }
+  .card-title {
+    font-weight: 700; font-size: 8pt; color: #0f3460;
+    text-transform: uppercase; letter-spacing: 0.4px;
+    margin-bottom: 4px; display: flex; align-items: center; gap: 5px;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+  .dot-b { background: #2563eb; } .dot-g { background: #059669; }
+  .dot-o { background: #d97706; } .dot-p { background: #7c3aed; }
+  .dot-r { background: #dc2626; } .dot-t { background: #0d9488; }
+  table { width: 100%; border-collapse: collapse; font-size: 7.6pt; }
+  th { background: #0f3460; color: #fff; padding: 3px 5px; text-align: left; font-weight: 600; }
+  td { padding: 3px 5px; border-bottom: 1px solid #e5eaf2; vertical-align: top; }
+  tr:nth-child(even) td { background: #f1f5f9; }
+  .tag {
+    display: inline-block; padding: 1px 5px; border-radius: 3px;
+    font-size: 7pt; font-weight: 600; white-space: nowrap;
+  }
+  .tag-d  { background: #dbeafe; color: #1e40af; }
+  .tag-ml { background: #d1fae5; color: #065f46; }
+  .tag-ai { background: #fef3c7; color: #92400e; }
+  .tag-h  { background: #fce7f3; color: #9d174d; }
+  .flow { display: flex; align-items: center; gap: 0; flex-wrap: nowrap; }
+  .fb {
+    border: 1.5px solid #2563eb; background: #eff6ff;
+    border-radius: 4px; padding: 4px 6px; text-align: center;
+    white-space: nowrap; flex-shrink: 0; font-size: 7.2pt;
+  }
+  .fai {
+    border: 1.5px solid #d97706; background: #fffbeb;
+    border-radius: 4px; padding: 4px 6px; text-align: center;
+    white-space: nowrap; flex-shrink: 0; font-size: 7.2pt;
+  }
+  .fml {
+    border: 1.5px solid #059669; background: #ecfdf5;
+    border-radius: 4px; padding: 4px 6px; text-align: center;
+    white-space: nowrap; flex-shrink: 0; font-size: 7.2pt;
+  }
+  .fdb {
+    border: 1.5px solid #7c3aed; background: #f5f3ff;
+    border-radius: 4px; padding: 4px 6px; text-align: center;
+    white-space: nowrap; flex-shrink: 0; font-size: 7.2pt;
+  }
+  .fh {
+    border: 1.5px solid #db2777; background: #fdf2f8;
+    border-radius: 4px; padding: 4px 6px; text-align: center;
+    white-space: nowrap; flex-shrink: 0; font-size: 7.2pt;
+  }
+  .arr { font-size: 10pt; color: #888; padding: 0 2px; flex-shrink: 0; }
+  .formula {
+    background: #1e293b; color: #e2e8f0; border-radius: 5px;
+    padding: 5px 8px; font-family: 'Courier New', monospace;
+    font-size: 7.5pt; line-height: 1.55; margin-top: 4px;
+  }
+  .c1 { color: #fbbf24; } .c2 { color: #67e8f9; } .c3 { color: #86efac; }
+  .section-label {
+    font-size: 7.5pt; font-weight: 700; color: #0f3460;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin: 6px 0 3px;
+  }
+  .branch-box {
+    border-radius: 4px; padding: 3px 6px; margin-bottom: 3px; font-size: 7.8pt;
+  }
+  .footer {
+    margin-top: 6px; border-top: 1px solid #dce3eb; padding-top: 4px;
+    display: flex; justify-content: space-between;
+    font-size: 6.8pt; color: #888;
+  }
+  .full-width { margin-top: 5px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">CS</div>
+  <div>
+    <h1>CivicShield — Clustering &amp; Incident-Fusion Architecture</h1>
+    <div class="sub">One-page technical reference · Incident Fusion · Duplicate Detection · Spatial Analytics · Priority Engine</div>
+  </div>
+</div>
+
+<div class="two-col">
+  <div class="col">
+    <div class="card">
+      <div class="card-title"><span class="dot dot-b"></span> End-to-End: New Report Arrives</div>
+      <div class="flow">
+        <div class="fb">Citizen<br>Report</div><span class="arr">→</span>
+        <div class="fai">Gemini AI<br>Analysis</div><span class="arr">→</span>
+        <div class="fai">Embedding<br>3072-d Vec</div><span class="arr">→</span>
+        <div class="fml">Priority<br>Engine</div><span class="arr">→</span>
+        <div class="fdb">Fusion<br>Cluster</div><span class="arr">→</span>
+        <div class="fh">Duplicate<br>Flag</div><span class="arr">→</span>
+        <div class="fh">Authority<br>Review</div>
+      </div>
+      <div style="margin-top:6px;">
+        <div class="branch-box" style="background:#ecfdf5;border:1px solid #a7f3d0;">
+          <b style="color:#065f46;">Branch A — Auto-Cluster:</b> Match found within 250 m → report merged into existing master incident, priority +12
+        </div>
+        <div class="branch-box" style="background:#eff6ff;border:1px solid #bfdbfe;">
+          <b style="color:#1e40af;">Branch B — New Incident:</b> No match → new master incident created with AI category, severity, department
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot dot-p"></span> Incident-Fusion Scoring Formula</div>
+      <div class="formula">
+<span class="c1">geoScore</span>      = 1 − (distance / <span class="c2">250 m</span>)
+<span class="c1">categoryScore</span>  = <span class="c2">1.0</span> same · <span class="c2">0.60</span> related pair · <span class="c2">0.10</span> other
+<span class="c1">semanticScore</span>   = cosineSim(<span class="c2">embeddingA</span>, <span class="c2">embeddingB</span>)
+  or tokenOverlap(textA, textB) if no embeddings
+
+<span class="c1">combined</span> = <span class="c3">0.45</span>×geo + <span class="c3">0.35</span>×category + <span class="c3">0.20</span>×semantic
+
+<b>MATCH if:</b> combined ≥ <span class="c2">0.62</span>
+<b>OR:</b> same category AND distance ≤ <span class="c2">180 m</span>
+
+<i style="color:#94a3b8;">Fallback (no embeddings): score capped at 0.60 → no false flags.</i>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card">
+      <div class="card-title"><span class="dot dot-g"></span> Five Clustering Engines</div>
+      <table>
+        <tr><th>Engine</th><th>Trigger</th><th>Radius</th><th>Min</th></tr>
+        <tr>
+          <td><b>Incident Fusion</b><br><span class="tag tag-ml">Auto-merge</span></td>
+          <td>Every new report</td><td>250 m</td><td>1</td>
+        </tr>
+        <tr>
+          <td><b>Duplicate Det.</b><br><span class="tag tag-d">Flag-only</span></td>
+          <td>Every new report</td><td>100 m</td><td>1</td>
+        </tr>
+        <tr>
+          <td><b>Hotspots</b><br><span class="tag tag-ai">Dashboard</span></td>
+          <td>On demand</td><td>500 m</td><td>3</td>
+        </tr>
+        <tr>
+          <td><b>Recurrence</b><br><span class="tag tag-ai">180-day</span></td>
+          <td>On demand</td><td>250 m</td><td>3</td>
+        </tr>
+        <tr>
+          <td><b>Root-Cause</b><br><span class="tag tag-ai">Signal</span></td>
+          <td>On demand</td><td>250 m</td><td>3</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot dot-t"></span> Related-Category Pairs (categoryScore = 0.60)</div>
+      <table>
+        <tr><th>Pair</th><th>Rationale</th></tr>
+        <tr><td>DRAINAGE_BLOCKAGE ↔ FLOOD</td><td>Blocked drain causes flooding</td></tr>
+        <tr><td>WATER_LEAKAGE ↔ DRAINAGE_BLOCKAGE</td><td>Pipe leak → drain overflow</td></tr>
+        <tr><td>ROAD_POTHOLE ↔ PUBLIC_INFRA_DAMAGE</td><td>Surface degradation cluster</td></tr>
+        <tr><td>BROKEN_STREETLIGHT ↔ ELECTRICAL_HAZARD</td><td>Electrical infrastructure</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot dot-o"></span> Auto-Cluster Priority Boost</div>
+      <table>
+        <tr><th>Event</th><th>Effect</th></tr>
+        <tr><td>Each report merged</td><td>report_count +1, priority_score +12</td></tr>
+        <tr><td>4+ reports total</td><td>Severity → CRITICAL</td></tr>
+        <tr><td>2+ reports, LOW severity</td><td>Severity → HIGH</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot dot-r"></span> Safety Guards</div>
+      <table>
+        <tr><th>Guard</th><th>Rule</th></tr>
+        <tr><td>No auto-merge DB write</td><td>Fusion increments existing incident — never auto-creates</td></tr>
+        <tr><td>Duplicate = PENDING only</td><td>Zero auto-confirmed merges. Authority reviews.</td></tr>
+        <tr><td>Citizen merge blocked</td><td>Role check → 403 Forbidden</td></tr>
+        <tr><td>Resolved target blocked</td><td>Cannot merge into RESOLVED incident</td></tr>
+        <tr><td>No-embedding cap</td><td>Fallback score ≤ 0.60, below 0.78 threshold</td></tr>
+        <tr><td>Audit log</td><td>Every merge: performed_by, old/new values, reason</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="section-label">■ System Architecture — Component Classification</div>
+<table class="full-width">
+  <tr>
+    <th style="width:16%">Component</th>
+    <th style="width:11%">Type</th>
+    <th style="width:21%">Technology</th>
+    <th style="width:52%">Role in Clustering Pipeline</th>
+  </tr>
+  <tr>
+    <td><b>AI Analysis Engine</b></td>
+    <td><span class="tag tag-ai">AI Model</span></td>
+    <td>Gemini 3.6 Flash + Smart NLP fallback</td>
+    <td>Classifies civic category, severity, safety risk (0–100), department. Runs first on every submission.</td>
+  </tr>
+  <tr>
+    <td><b>Embedding Service</b></td>
+    <td><span class="tag tag-ai">AI Model</span></td>
+    <td>Gemini Embedding 001 (3072-d)</td>
+    <td>Dense vector per report. Powers semantic cosine similarity in fusion and duplicate detection.</td>
+  </tr>
+  <tr>
+    <td><b>Incident Fusion Engine</b></td>
+    <td><span class="tag tag-ml">ML / Algo</span></td>
+    <td>Haversine + weighted scoring (deterministic)</td>
+    <td>On submission: finds best active master within 250 m. Clusters new report into it or creates new master.</td>
+  </tr>
+  <tr>
+    <td><b>Duplicate Detector</b></td>
+    <td><span class="tag tag-ml">ML / Algo</span></td>
+    <td>Haversine + cosine + PENDING relations</td>
+    <td>Secondary scan (100 m). Flags potential duplicates as PENDING relations. Human-in-the-loop confirm/reject.</td>
+  </tr>
+  <tr>
+    <td><b>Hotspot Engine</b></td>
+    <td><span class="tag tag-d">Deterministic</span></td>
+    <td>Density-based spatial clustering (O(n²))</td>
+    <td>Finds geographic clusters of ≥3 incidents in 500 m radius for officer dashboard. Merges overlapping clusters.</td>
+  </tr>
+  <tr>
+    <td><b>Recurrence Engine</b></td>
+    <td><span class="tag tag-d">Deterministic</span></td>
+    <td>Same spatial clustering, 180-day window</td>
+    <td>Detects repeat problems at same location. Computes avg days between occurrences and trend direction.</td>
+  </tr>
+  <tr>
+    <td><b>Root-Cause Engine</b></td>
+    <td><span class="tag tag-d">Deterministic</span></td>
+    <td>Clustering + weighted signal score</td>
+    <td>Groups incidents spatially. Signal score: spatial(35%) + temporal(25%) + category(20%) + recurrence(20%).</td>
+  </tr>
+  <tr>
+    <td><b>Priority Engine</b></td>
+    <td><span class="tag tag-d">Deterministic</span></td>
+    <td>Weighted scoring formula</td>
+    <td>5-factor score: Safety Risk(35%) + Severity(25%) + Impact(20%) + Recurrence(10%) + Location(10%).</td>
+  </tr>
+  <tr>
+    <td><b>Escalation Engine</b></td>
+    <td><span class="tag tag-d">Deterministic</span></td>
+    <td>Rule-based tier classifier</td>
+    <td>EMERGENCY_REVIEW / URGENT / WATCH / NONE based on priority + SLA + recurrence + safety risk.</td>
+  </tr>
+  <tr>
+    <td><b>Officer Dashboard</b></td>
+    <td><span class="tag tag-h">Human</span></td>
+    <td>React + Next.js (TypeScript)</td>
+    <td>Displays clusters, duplicate flags, root-cause signals, hotspots, recurrence trends. Authority approves merges.</td>
+  </tr>
+  <tr>
+    <td><b>Storage Layer</b></td>
+    <td><span class="tag tag-d">Database</span></td>
+    <td>Supabase (PostgreSQL + PostGIS)</td>
+    <td>Persists incidents, reports, embeddings, duplicate_relations, audit logs. PostGIS for spatial queries.</td>
+  </tr>
+</table>
+
+<div class="two-col" style="margin-top:6px;">
+  <div class="col">
+    <div class="card">
+      <div class="card-title"><span class="dot dot-p"></span> Core Data Model</div>
+      <table>
+        <tr><th>Entity</th><th>Key Fields</th></tr>
+        <tr><td><b>Incident</b></td><td>id, case_id, category, severity, priority_score, status, lat, lng, report_count, master_incident_id, dept_id</td></tr>
+        <tr><td><b>Report</b></td><td>id, incident_id, tracking_code, raw_description, image_url, lat, lng, is_original_report</td></tr>
+        <tr><td><b>AI Analysis</b></td><td>incident_id, confidence, detected_category, detected_severity, dept_code, extracted_features</td></tr>
+        <tr><td><b>Embedding</b></td><td>incident_id, vector (3072-d float[])</td></tr>
+        <tr><td><b>Duplicate Relation</b></td><td>target_id, candidate_id, similarity_score, distance_m, status (PENDING/CONFIRMED/REJECTED)</td></tr>
+        <tr><td><b>Resolution Evidence</b></td><td>incident_id, officer_id, proof_image, notes, citizen_verified, citizen_feedback</td></tr>
+        <tr><td><b>Audit Log</b></td><td>incident_id, performed_by, action, old_value, new_value, reason</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="col">
+    <div class="card">
+      <div class="card-title"><span class="dot dot-o"></span> Clustering Decision Matrix</div>
+      <table>
+        <tr><th>Condition</th><th>Action</th></tr>
+        <tr><td>Active incident within 250 m, combined ≥ 0.62</td><td><b>Auto-cluster</b> → merge into master, priority +12</td></tr>
+        <tr><td>Active incident within 250 m, combined &lt; 0.62</td><td><b>No cluster</b> → create new incident</td></tr>
+        <tr><td>Candidate within 100 m, sim ≥ 0.75, combined ≥ 0.78</td><td><b>Flag PENDING</b> → authority reviews, no auto-merge</td></tr>
+        <tr><td>Same location, different category (pothole + garbage)</td><td><b>Separate incidents</b> → categoryScore 0.10</td></tr>
+        <tr><td>No embeddings available</td><td><b>Safe fallback</b> → score capped at 0.60, below 0.78</td></tr>
+        <tr><td>Citizen tries merge endpoint</td><td><b>403 Forbidden</b> → role check blocks non-authority</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot dot-r"></span> Critical Safety Invariants</div>
+      <table>
+        <tr><th>#</th><th>Invariant</th></tr>
+        <tr><td>1</td><td>Auto-cluster increments existing incident — never creates new DB record</td></tr>
+        <tr><td>2</td><td>All duplicate_relations rows created with status = PENDING. Zero auto-confirmed merges.</td></tr>
+        <tr><td>3</td><td>Authority must explicitly call POST /api/incidents/merge to fuse incidents.</td></tr>
+        <tr><td>4</td><td>Resolution Integrity: RESOLVED incidents cannot accept new merges or clustering.</td></tr>
+        <tr><td>5</td><td>Every merge writes an immutable audit log entry.</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <span>CivicShield · Clustering Architecture Reference · 2026</span>
+  <span>Dual-mode: Mock (local JSON) / Supabase (PostgreSQL + PostGIS)</span>
+</div>
+
+</body>
+</html>

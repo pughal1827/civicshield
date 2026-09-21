@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/db/supabase-admin';
 import { mockStore } from '@/lib/db/mock-store';
 import { getStorageConfig, ProductionDatabaseError } from '@/lib/db/storage-config';
 import { calculatePriorityScore } from '@/lib/priority/priority-engine';
+import { smartClassifyComplaint, DEPARTMENT_NAMES } from '@/lib/ai/smart-categorizer';
 import { createErrorResponse, createSuccessResponse } from '@/lib/utils/api-error';
 
 const updateIncidentSchema = z.object({
@@ -95,23 +96,69 @@ export async function GET(
       return createErrorResponse('Incident not found.', 'NOT_FOUND', 404);
     }
 
+    // Combine text from citizen reports, title, and summary for high-fidelity AI classification
+    const combinedText = [
+      incident.title,
+      incident.summary,
+      ...reports.map((r: any) => r.raw_description || r.rawDescription || ''),
+      incident.address,
+    ]
+      .filter(Boolean)
+      .join(' ');
+
+    const dynamicAiMatch = smartClassifyComplaint(combinedText);
+
+    // Build enriched real AI Analysis object
+    const finalAiAnalysis = {
+      id: aiAnalysis?.id || `ai-${incident.id}`,
+      incident_id: incident.id,
+      confidence_score: aiAnalysis?.confidence_score ?? aiAnalysis?.confidence ?? dynamicAiMatch.confidence,
+      confidence: aiAnalysis?.confidence_score ?? aiAnalysis?.confidence ?? dynamicAiMatch.confidence,
+      detected_category: aiAnalysis?.detected_category || aiAnalysis?.category || dynamicAiMatch.category,
+      category: aiAnalysis?.detected_category || aiAnalysis?.category || dynamicAiMatch.category,
+      detected_severity: incident.severity || aiAnalysis?.detected_severity || dynamicAiMatch.severity,
+      severity: incident.severity || aiAnalysis?.detected_severity || dynamicAiMatch.severity,
+      suggested_department_code:
+        aiAnalysis?.suggested_department_code ||
+        aiAnalysis?.recommended_department_code ||
+        dynamicAiMatch.departmentCode,
+      suggested_department_name:
+        DEPARTMENT_NAMES[dynamicAiMatch.departmentCode] ||
+        incident.departments?.name ||
+        incident.departmentName ||
+        'Road Maintenance & Infrastructure',
+      safety_risk_score:
+        aiAnalysis?.extracted_features?.safetyRiskScore ||
+        incident.priority_factors?.safetyRisk ||
+        dynamicAiMatch.safetyRiskScore,
+      public_impact: dynamicAiMatch.publicImpact,
+      extracted_keywords:
+        aiAnalysis?.extracted_features?.keywords && aiAnalysis.extracted_features.keywords.length > 0
+          ? aiAnalysis.extracted_features.keywords
+          : dynamicAiMatch.extractedKeywords,
+      reasoning: dynamicAiMatch.reasoning,
+      created_at: aiAnalysis?.created_at || incident.created_at || new Date().toISOString(),
+    };
+
     // Calculate Priority Engine Factor Breakdown
     const priorityEngineResult = calculatePriorityScore({
-      category: incident.category,
-      aiSeverity: incident.severity,
-      aiSafetyRiskScore: incident.priority_factors?.safetyRisk || 50,
+      category: incident.category || finalAiAnalysis.detected_category,
+      aiSeverity: incident.severity || finalAiAnalysis.detected_severity,
+      aiSafetyRiskScore: finalAiAnalysis.safety_risk_score,
       description: incident.summary,
       addressText: incident.address,
       reportCount: incident.report_count || 1,
       affectedCitizensCount: incident.affected_citizens_count || 1,
       recurrenceCountInArea: 0,
-      isNearSensitiveLocation: incident.address?.toLowerCase().includes('school') || incident.address?.toLowerCase().includes('hospital'),
+      isNearSensitiveLocation:
+        incident.address?.toLowerCase().includes('school') ||
+        incident.address?.toLowerCase().includes('hospital'),
     });
 
     return createSuccessResponse({
       incident,
       reports: reports || [],
-      aiAnalysis: aiAnalysis || null,
+      aiAnalysis: finalAiAnalysis,
       duplicates: duplicates || [],
       resolutionEvidence: resolutionEvidence || null,
       auditLogs: auditLogs || [],
