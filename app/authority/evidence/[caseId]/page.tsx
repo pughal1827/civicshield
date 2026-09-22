@@ -97,7 +97,7 @@ export default function AuthorityEvidenceReviewPage({ params }: AuthorityEvidenc
 
       const json = await res.json();
       if (json.success) {
-        setActionSuccessMsg('✓ Evidence approved. Complaint marked as resolved.');
+        setActionSuccessMsg('✓ Evidence approved. Complaint status updated to PENDING_CITIZEN_VERIFICATION.');
         setShowApproveModal(false);
         fetchEvidenceDetail();
       } else {
@@ -227,14 +227,14 @@ export default function AuthorityEvidenceReviewPage({ params }: AuthorityEvidenc
         </div>
       )}
 
-      {(status === 'RESOLVED' || status === 'VERIFIED') && (
+      {(status === 'PENDING_CITIZEN_VERIFICATION' || status === 'RESOLVED' || status === 'VERIFIED' || status === 'CLOSED') && (
         <div className="p-5 rounded-3xl bg-emerald-50 border-2 border-emerald-300 text-emerald-950 space-y-2 shadow-xs">
           <div className="flex items-center gap-2.5 font-black text-sm text-emerald-900">
             <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-            <span>🟢 EVIDENCE APPROVED & COMPLAINT RESOLVED</span>
+            <span>🟢 EVIDENCE APPROVED — PENDING CITIZEN VERIFICATION</span>
           </div>
           <p className="text-xs font-medium text-emerald-800 leading-relaxed">
-            Approved by {incident.resolved_by || 'Authority Officer'} on {formatDate(incident.resolved_at)}. Complaint is resolved globally across Authority, Worker, and Citizen portals.
+            Approved by {incident.approved_by || incident.approvedBy || incident.resolved_by || 'Authority Officer'} on {formatDate(incident.approved_at || incident.approvedAt || incident.resolved_at)}. Complaint is awaiting citizen resolution verification.
           </p>
         </div>
       )}
@@ -452,7 +452,7 @@ export default function AuthorityEvidenceReviewPage({ params }: AuthorityEvidenc
       </div>
 
       {/* AUTHORITY ACTION BUTTON BAR */}
-      {status !== 'RESOLVED' && status !== 'VERIFIED' && (
+      {status === 'WAITING_FOR_APPROVAL' && (
         <div className="bg-white rounded-3xl border-2 border-slate-900 p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
           <div>
             <h3 className="text-sm font-black text-slate-900">Officer Evidence Decision</h3>

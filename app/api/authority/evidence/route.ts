@@ -58,7 +58,15 @@ export async function GET(req: NextRequest) {
 
         // Evidence Status Mapping
         let evidenceStatus: 'PENDING' | 'APPROVED' | 'REJECTED' = 'PENDING';
-        if (inc.status === 'RESOLVED' || inc.status === 'VERIFIED' || ev?.status === 'APPROVED') {
+        if (inc.status === 'WAITING_FOR_APPROVAL' || ev?.status === 'PENDING') {
+          evidenceStatus = 'PENDING';
+        } else if (
+          inc.status === 'PENDING_CITIZEN_VERIFICATION' ||
+          inc.status === 'RESOLVED' ||
+          inc.status === 'VERIFIED' ||
+          inc.status === 'CLOSED' ||
+          ev?.status === 'APPROVED'
+        ) {
           evidenceStatus = 'APPROVED';
         } else if (inc.status === 'EVIDENCE_REJECTED' || ev?.status === 'REJECTED') {
           evidenceStatus = 'REJECTED';
