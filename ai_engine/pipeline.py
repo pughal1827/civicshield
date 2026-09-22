@@ -11,10 +11,10 @@ from typing import Optional, BinaryIO
 from io import BytesIO
 from PIL import Image
 
-from .yolo_detector import detect as yolo_detect, get_civic_hazard_labels, YOLODetectionResult
-from .clip_matcher import verify_image_text_match, CLIPMatchResult
-from .rf_severity_classifier import build_feature_vector, extract_image_features, extract_text_features, get_classifier
-from .isolation_forest_anomaly import (
+from .models.yolo_detector import detect as yolo_detect, get_civic_hazard_labels, YOLODetectionResult
+from .models.clip_matcher import verify_image_text_match, CLIPMatchResult
+from .models.rf_severity_classifier import build_feature_vector, extract_image_features, extract_text_features, get_classifier
+from .models.isolation_forest_anomaly import (
     extract_anomaly_features,
     get_anomaly_detector,
 )

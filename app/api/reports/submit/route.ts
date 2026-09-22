@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/db/supabase-admin';
 import { mockStore } from '@/lib/db/mock-store';
 import { getStorageConfig, ProductionDatabaseError } from '@/lib/db/storage-config';
 import { analyzeCivicIssue, GeminiConfigurationError } from '@/lib/ai/gemini';
+import { verifyCitizenReportImage } from '@/lib/ai/image-verifier';
 import { generateTextEmbedding, buildNormalizedEmbeddingText } from '@/lib/ai/embeddings';
 import { saveAIAnalysisMetadata, saveIncidentEmbedding } from '@/lib/ai/ai-persistence';
 import { calculatePriorityScore } from '@/lib/priority/priority-engine';
@@ -56,11 +57,21 @@ export async function POST(req: NextRequest) {
     const randomNum = Math.floor(1000 + Math.random() * 9000);
     const trackingCode = crypto.randomUUID(); // Secure unique citizen tracking UUID
 
-    // 3. Invoke AI Multi-modal Analysis
-    logger.info('SubmitAPI', `Running AI multi-modal analysis...`);
-    const { analysis, isFallback } = await analyzeCivicIssue(description, imageUrl || undefined);
+    // 3. Invoke AI Multi-modal Vision Verification & Text Analysis
+    logger.info('SubmitAPI', `Running AI multi-modal vision & text verification...`);
+    const [aiResult, imageVerification] = await Promise.all([
+      analyzeCivicIssue(description, imageUrl || undefined),
+      verifyCitizenReportImage({
+        imageUrl: imageUrl || undefined,
+        description,
+        claimedCategory: userCategory,
+        latitude,
+        longitude,
+      }),
+    ]);
 
-    const finalCategory = userCategory || analysis.category;
+    const { analysis, isFallback } = aiResult;
+    const finalCategory = userCategory || (imageVerification.predictedCategory as any) || analysis.category;
     const summary = analysis.summary || description.slice(0, 120);
 
     // 4. Generate Text Embedding Vector
@@ -287,6 +298,7 @@ export async function POST(req: NextRequest) {
           safetyRiskScore: analysis.safetyRiskScore,
           importantDetails: analysis.importantDetails,
           summary: analysis.summary,
+          imageVerification,
         },
         created_at: submissionTimestamp,
       });
@@ -395,7 +407,7 @@ export async function POST(req: NextRequest) {
         if (embeddingVector) {
           saveIncidentEmbedding(incident.id, report?.id, embeddingVector).catch(() => {});
         }
-        saveAIAnalysisMetadata(incident.id, analysis, { raw: description }).catch(() => {});
+        saveAIAnalysisMetadata(incident.id, analysis, { raw: description, imageVerification }).catch(() => {});
       } catch (dbException) {
         logger.error('SubmitAPI', 'Supabase connection/insertion failure. Saving to local mock store fallback.', { error: String(dbException) });
         
@@ -462,6 +474,26 @@ export async function POST(req: NextRequest) {
           is_original_report: true,
           created_at: submissionTimestamp,
         });
+
+        mockStore.addAiAnalysis({
+          id: `ai-${Date.now()}`,
+          incident_id: generatedId,
+          confidence_score: analysis.confidenceScore,
+          detected_category: analysis.category,
+          detected_severity: analysis.severity,
+          suggested_department_code: analysis.recommendedDepartmentCode,
+          extracted_features: {
+            safetyRiskScore: analysis.safetyRiskScore,
+            importantDetails: analysis.importantDetails,
+            summary: analysis.summary,
+            imageVerification,
+          },
+          created_at: submissionTimestamp,
+        });
+
+        if (embeddingVector) {
+          mockStore.addEmbedding(generatedId, embeddingVector);
+        }
       }
     }
 
@@ -495,6 +527,7 @@ export async function POST(req: NextRequest) {
       reportCount: 1,
       duplicatesFlagged: duplicateCount,
       isAiFallback: isFallback,
+      aiVerification: imageVerification,
       storageMode: storageConfig.mode,
     });
   } catch (error) {

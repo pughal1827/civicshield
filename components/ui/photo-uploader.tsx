@@ -65,15 +65,12 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
     }
   }, [cameraStream]);
 
-  // Clean up stream and blob URLs on unmount
+  // Clean up media stream on unmount (keep blob URLs intact for multi-step preview)
   useEffect(() => {
     return () => {
       stopCameraStream();
-      if (capturedBlobUrl && capturedBlobUrl.startsWith('blob:')) {
-        URL.revokeObjectURL(capturedBlobUrl);
-      }
     };
-  }, [stopCameraStream, capturedBlobUrl]);
+  }, [stopCameraStream]);
 
   // Bind cameraStream to videoRef whenever cameraStream or isCameraActive changes
   useEffect(() => {
@@ -189,6 +186,10 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
 
         setCapturedFile(file);
         setCapturedBlobUrl(localBlobUrl);
+
+        // Auto-save to parent onFileSelect immediately so image is never lost between wizard steps
+        onFileSelect(file, localBlobUrl);
+        onExternalUrlSelect('');
       },
       'image/jpeg',
       0.92
@@ -197,15 +198,10 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
 
   // User accepts the captured camera photo
   const handleUseCapturedPhoto = () => {
-    if (!capturedFile || !capturedBlobUrl) return;
-
-    // Revoke old preview URL if any
-    if (previewUrl && previewUrl.startsWith('blob:')) {
-      URL.revokeObjectURL(previewUrl);
+    if (capturedFile && capturedBlobUrl) {
+      onFileSelect(capturedFile, capturedBlobUrl);
+      onExternalUrlSelect('');
     }
-
-    onFileSelect(capturedFile, capturedBlobUrl);
-    onExternalUrlSelect('');
 
     // Reset local camera UI states
     setCapturedFile(null);
@@ -221,6 +217,7 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
       setCapturedBlobUrl(null);
       setCapturedFile(null);
     }
+    onFileSelect(null, '');
     startCamera(facingMode);
   };
 

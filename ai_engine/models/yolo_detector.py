@@ -258,3 +258,25 @@ def get_civic_hazard_labels(detection_result: YOLODetectionResult) -> list[str]:
         lbl for lbl in detection_result.labels
         if lbl.lower() in RELEVANT_CIVIC_LABELS
     ]
+
+
+class YOLODetector:
+    """Wrapper class for YOLO inference."""
+
+    def __init__(self, model_name: str = "yolov8n.pt"):
+        self.model_name = model_name
+        self.model = load_model(model_name)
+
+    def detect(self, image_input, confidence_threshold: float = 0.35, iou_threshold: float = 0.45) -> YOLODetectionResult:
+        return detect(image_input, confidence_threshold=confidence_threshold, iou_threshold=iou_threshold)
+
+
+_GLOBAL_DETECTOR: Optional[YOLODetector] = None
+
+
+def get_detector(model_name: str = "yolov8n.pt") -> YOLODetector:
+    global _GLOBAL_DETECTOR
+    if _GLOBAL_DETECTOR is None:
+        _GLOBAL_DETECTOR = YOLODetector(model_name)
+    return _GLOBAL_DETECTOR
+

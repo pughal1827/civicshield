@@ -35,7 +35,7 @@ async def lifespan(app: FastAPI):
         from .models.isolation_forest_anomaly import get_anomaly_detector
 
         load_model("yolov8n.pt")
-        load_clip_model("ViT-B/32")
+        load_clip_model("openai/clip-vit-base-patch32")
         get_classifier().train()
         get_anomaly_detector().train()
 
