@@ -135,7 +135,7 @@ export async function verifyCitizenReportImage(params: {
 
   try {
     const formData = new FormData();
-    const blob = new Blob([imageResolution.buffer], { type: imageResolution.mimeType });
+    const blob = new Blob([new Uint8Array(imageResolution.buffer)], { type: imageResolution.mimeType });
     formData.append('image', blob, 'upload.jpg');
     formData.append('description', description);
     if (claimedCategory) formData.append('claimed_category', claimedCategory);

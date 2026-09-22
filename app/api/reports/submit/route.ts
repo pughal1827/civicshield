@@ -118,6 +118,8 @@ export async function POST(req: NextRequest) {
 
     // 4. Generate Tracking Code & Default Case ID
     const randomNum = Math.floor(1000 + Math.random() * 9000);
+    const trackingCode = crypto.randomUUID();
+
     // 5. Invoke AI Multi-modal Vision Verification & Text Analysis
     logger.info('SubmitAPI', `Running AI multi-modal vision & text verification...`);
     const [aiResult, imageVerification] = await Promise.all([
