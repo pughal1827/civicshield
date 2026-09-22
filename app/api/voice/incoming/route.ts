@@ -5,30 +5,16 @@ const VoiceResponse = twilio.twiml.VoiceResponse;
 
 export async function POST(req: NextRequest) {
   try {
-    const twiml = new VoiceResponse();
-
-    // Use <Say> to greet the caller
-    twiml.say(
-      { voice: 'Polly.Matthew-Neural' },
-      'Welcome to Civic Shield. Please describe your civic issue and the exact location after the beep. Press the star key when you are finished.'
-    );
-
-    // Use <Record> to record the caller's voice
-    // The recording will be sent to the process webhook
-    twiml.record({
-      action: '/api/voice/process',
-      method: 'POST',
-      maxLength: 120, // Max 2 minutes
-      timeout: 10, // Wait 10 seconds for silence instead of 5
-      finishOnKey: '*',
-      playBeep: true,
-    });
-
-    // If the recording fails or they stay silent, we say a fallback message
-    twiml.say('We did not receive any input. Goodbye.');
+    const baseUrl = process.env.NGROK_URL || 'https://universal-garbage-amenity.ngrok-free.dev';
+    const rawXml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Say voice="Polly.Matthew-Neural">Welcome to Civic Shield. Please describe your civic issue and the exact location after the beep. Press the star key when you are finished.</Say>
+  <Gather input="speech" action="${baseUrl}/api/voice/process" method="POST" timeout="5" speechTimeout="auto"></Gather>
+  <Say>We did not receive any input. Goodbye.</Say>
+</Response>`;
 
     // Return the XML response directly
-    return new NextResponse(twiml.toString(), {
+    return new NextResponse(rawXml, {
       headers: { 'Content-Type': 'text/xml' },
     });
   } catch (error) {

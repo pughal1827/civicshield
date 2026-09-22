@@ -16,7 +16,7 @@ export class GeminiConfigurationError extends Error {
 }
 
 const PRIMARY_MODEL = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
-const FALLBACK_MODELS = ['gemini-flash-latest', 'gemini-2.5-flash-lite', 'gemini-3.5-flash'];
+const FALLBACK_MODELS = ['gemini-3.5-flash', 'gemini-flash-lite-latest', 'gemini-3.5-flash-lite'];
 
 const CIVIC_SYSTEM_PROMPT = `
 You are an expert Civic Issue Classification AI for municipal governance platforms.
