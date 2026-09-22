@@ -8,7 +8,7 @@
       "summary": "Deep pothole causing vehicle damage near school crossing",
       "category": "ROAD_POTHOLE",
       "severity": "HIGH",
-      "status": "CLOSED",
+      "status": "SUBMITTED",
       "priority_score": 75,
       "priorityScore": 75,
       "priority_factors": {
@@ -34,7 +34,7 @@
       "affectedCitizensCount": 1,
       "created_at": "2026-09-21T10:00:00.000Z",
       "createdAt": "2026-09-21T10:00:00.000Z",
-      "updated_at": "2026-09-21T21:38:46.037Z",
+      "updated_at": "2026-09-21T10:00:00.000Z",
       "updatedAt": "2026-09-21T10:00:00.000Z",
       "address": "42 Main Road, Sector 1",
       "departments": {
@@ -47,54 +47,17 @@
       "assigned_worker_id": "user-worker-road-001",
       "assignedWorkerId": "user-worker-road-001",
       "assignedWorker": "Alex Rivera (Road Maintenance Lead)",
-      "assignedWorkerName": "Alex Rivera (Road Maintenance Lead)",
-      "previous_department": "Road Maintenance",
-      "previousDepartment": "Road Maintenance",
-      "previous_worker": "Alex Rivera (Road Maintenance Lead)",
-      "previousWorker": "Alex Rivera (Road Maintenance Lead)",
-      "old_assigned_at": "2026-09-21T10:00:00.000Z",
-      "oldAssignedAt": "2026-09-21T10:00:00.000Z",
-      "new_department": "Road Maintenance",
-      "newDepartment": "Road Maintenance",
-      "new_worker": "Alex Rivera (Road Maintenance Lead)",
-      "newWorker": "Alex Rivera (Road Maintenance Lead)",
-      "new_assigned_at": "2026-09-21T21:38:43.889Z",
-      "newAssignedAt": "2026-09-21T21:38:43.889Z",
-      "assignedDepartment": "Road Maintenance",
-      "assigned_by": "Officer Robert Chen",
-      "assignedBy": "Officer Robert Chen",
-      "assigned_at": "2026-09-21T21:38:43.889Z",
-      "assignedAt": "2026-09-21T21:38:43.889Z",
-      "changed_by": "Citizen",
-      "changedBy": "Citizen",
-      "changed_at": "2026-09-21T21:38:46.037Z",
-      "changedAt": "2026-09-21T21:38:46.037Z",
-      "accepted_at": "2026-09-21T21:38:45.777Z",
-      "acceptedAt": "2026-09-21T21:38:45.777Z",
-      "accepted_by": "Alex Rivera (Road Maintenance Lead)",
-      "acceptedBy": "Alex Rivera (Road Maintenance Lead)",
-      "evidence_submitted_at": "2026-09-21T21:38:45.873Z",
-      "evidence_submitted_by": "Alex Rivera (Road Maintenance Lead)",
-      "approved_by": "Officer Sarah Jenkins",
-      "approvedBy": "Officer Sarah Jenkins",
-      "approved_at": "2026-09-21T21:38:45.921Z",
-      "approvedAt": "2026-09-21T21:38:45.921Z",
-      "citizenVerifiedBy": "Citizen (Case Owner)",
-      "citizen_verified_by": "Citizen (Case Owner)",
-      "citizenVerifiedAt": "2026-09-21T21:38:46.037Z",
-      "citizen_verified_at": "2026-09-21T21:38:46.037Z",
-      "resolved_at": "2026-09-21T21:38:46.037Z",
-      "resolvedAt": "2026-09-21T21:38:46.037Z"
+      "assignedWorkerName": "Alex Rivera (Road Maintenance Lead)"
     },
     {
-      "id": "inc-1790026862922-878",
-      "case_id": "CS-1598",
-      "caseId": "CS-1598",
-      "title": "ROAD POTHOLE near GPS Location (13.3993",
-      "summary": "there is a pothole",
+      "id": "inc-1790056919388-754",
+      "case_id": "CS-6610",
+      "caseId": "CS-6610",
+      "title": "ROAD POTHOLE near GPS Location (13.3571",
+      "summary": "road pothole near my home",
       "category": "ROAD_POTHOLE",
       "severity": "HIGH",
-      "status": "RESOLVED",
+      "status": "CLOSED",
       "priority_score": 56,
       "priorityScore": 56,
       "priority_factors": {
@@ -105,8 +68,8 @@
         "locationSensitivity": 25,
         "explanation": "Priority 56/100 [MEDIUM] calculated via Civic Risk Matrix: Safety Risk (78 @ 35%), Severity (75 @ 25%), Public Impact (25 @ 20%), Recurrence (20 @ 10%), Location (25 @ 10%)."
       },
-      "latitude": 13.399316999999998,
-      "longitude": 80.118896,
+      "latitude": 13.35705356154303,
+      "longitude": 80.1428794422908,
       "department_id": "11111111-1111-1111-1111-111111111111",
       "departmentId": "11111111-1111-1111-1111-111111111111",
       "master_incident_id": null,
@@ -116,98 +79,36 @@
       "reportCount": 1,
       "affected_citizens_count": 1,
       "affectedCitizensCount": 1,
-      "created_at": "2026-09-21T21:41:02.922Z",
-      "createdAt": "2026-09-21T21:41:02.922Z",
-      "updated_at": "2026-09-21T21:51:51.616Z",
-      "address": "GPS Location (13.3993, 80.1189)",
+      "created_at": "2026-09-22T06:01:59.388Z",
+      "createdAt": "2026-09-22T06:01:59.388Z",
+      "updated_at": "2026-09-22T06:03:58.243Z",
+      "address": "GPS Location (13.3571, 80.1429)",
       "departments": {
         "id": "11111111-1111-1111-1111-111111111111",
         "name": "Road Maintenance & Infrastructure",
         "code": "ROAD_MAINT"
       },
       "imageUrl": null,
-      "accepted_at": "2026-09-21T21:41:40.165Z",
-      "acceptedAt": "2026-09-21T21:41:40.165Z",
+      "accepted_at": "2026-09-22T06:02:48.998Z",
+      "acceptedAt": "2026-09-22T06:02:48.998Z",
       "accepted_by": "Alex Rivera (Road Maintenance Lead)",
       "acceptedBy": "Alex Rivera (Road Maintenance Lead)",
       "changed_by": "Citizen",
       "changedBy": "Citizen",
-      "changed_at": "2026-09-21T21:44:59.552Z",
-      "changedAt": "2026-09-21T21:44:59.552Z",
-      "evidence_submitted_at": "2026-09-21T21:41:52.821Z",
+      "changed_at": "2026-09-22T06:03:58.243Z",
+      "changedAt": "2026-09-22T06:03:58.243Z",
+      "evidence_submitted_at": "2026-09-22T06:03:01.317Z",
       "evidence_submitted_by": "Alex Rivera (Road Maintenance Lead)",
-      "resolved_at": "2026-09-21T21:51:51.616Z",
-      "resolved_by": "Officer Robert Chen",
-      "citizenVerifiedBy": "Citizen (Case Owner)",
-      "citizen_verified_by": "Citizen (Case Owner)",
-      "citizenVerifiedAt": "2026-09-21T21:44:59.552Z",
-      "citizen_verified_at": "2026-09-21T21:44:59.552Z",
-      "resolvedAt": "2026-09-21T21:44:59.552Z",
       "approved_by": "Officer Robert Chen",
       "approvedBy": "Officer Robert Chen",
-      "approved_at": "2026-09-21T21:44:04.635Z",
-      "approvedAt": "2026-09-21T21:44:04.635Z"
-    },
-    {
-      "id": "inc-1790027257718-644",
-      "case_id": "CS-8103",
-      "caseId": "CS-8103",
-      "title": "ELECTRICAL HAZARD near GPS Location (13.0676",
-      "summary": "transformer broken near my home",
-      "category": "ELECTRICAL_HAZARD",
-      "severity": "CRITICAL",
-      "status": "CLOSED",
-      "priority_score": 82,
-      "priorityScore": 82,
-      "priority_factors": {
-        "safetyRisk": 94,
-        "publicImpact": 25,
-        "severity": 100,
-        "recurrence": 20,
-        "locationSensitivity": 25,
-        "explanation": "Priority 82/100 [CRITICAL] calculated via Civic Risk Matrix: Safety Risk (94 @ 35%), Severity (100 @ 25%), Public Impact (25 @ 20%), Recurrence (20 @ 10%), Location (25 @ 10%)."
-      },
-      "latitude": 13.0676,
-      "longitude": 80.2187,
-      "department_id": "33333333-3333-3333-3333-333333333333",
-      "departmentId": "33333333-3333-3333-3333-333333333333",
-      "master_incident_id": null,
-      "masterIncidentId": null,
-      "is_duplicate_flagged": false,
-      "report_count": 1,
-      "reportCount": 1,
-      "affected_citizens_count": 1,
-      "affectedCitizensCount": 1,
-      "created_at": "2026-09-21T21:47:37.718Z",
-      "createdAt": "2026-09-21T21:47:37.718Z",
-      "updated_at": "2026-09-21T21:52:11.992Z",
-      "address": "GPS Location (13.0676, 80.2187)",
-      "departments": {
-        "id": "33333333-3333-3333-3333-333333333333",
-        "name": "Electrical & Street Lighting",
-        "code": "ELECTRICAL"
-      },
-      "imageUrl": null,
-      "accepted_at": "2026-09-21T21:48:41.479Z",
-      "acceptedAt": "2026-09-21T21:48:41.479Z",
-      "accepted_by": "Marcus Vance (Electrical Field Lead)",
-      "acceptedBy": "Marcus Vance (Electrical Field Lead)",
-      "changed_by": "Citizen",
-      "changedBy": "Citizen",
-      "changed_at": "2026-09-21T21:52:11.991Z",
-      "changedAt": "2026-09-21T21:52:11.991Z",
-      "evidence_submitted_at": "2026-09-21T21:51:14.516Z",
-      "evidence_submitted_by": "Marcus Vance (Electrical Field Lead)",
-      "approved_by": "Officer Robert Chen",
-      "approvedBy": "Officer Robert Chen",
-      "approved_at": "2026-09-21T21:51:30.839Z",
-      "approvedAt": "2026-09-21T21:51:30.839Z",
+      "approved_at": "2026-09-22T06:03:10.194Z",
+      "approvedAt": "2026-09-22T06:03:10.194Z",
       "citizenVerifiedBy": "Citizen (Case Owner)",
       "citizen_verified_by": "Citizen (Case Owner)",
-      "citizenVerifiedAt": "2026-09-21T21:52:11.991Z",
-      "citizen_verified_at": "2026-09-21T21:52:11.991Z",
-      "resolved_at": "2026-09-21T21:52:11.991Z",
-      "resolvedAt": "2026-09-21T21:52:11.991Z"
+      "citizenVerifiedAt": "2026-09-22T06:03:58.243Z",
+      "citizen_verified_at": "2026-09-22T06:03:58.243Z",
+      "resolved_at": "2026-09-22T06:03:58.243Z",
+      "resolvedAt": "2026-09-22T06:03:58.243Z"
     }
   ],
   "reports": [
@@ -232,44 +133,24 @@
       "createdAt": "2026-09-21T10:00:00.000Z"
     },
     {
-      "id": "rep-1790026862924",
-      "incident_id": "inc-1790026862922-878",
-      "incidentId": "inc-1790026862922-878",
+      "id": "rep-1790056919391",
+      "incident_id": "inc-1790056919388-754",
+      "incidentId": "inc-1790056919388-754",
       "citizen_id": "cit-101",
       "citizenId": "cit-101",
-      "tracking_code": "0c06d5c8-f21d-44ce-a8f3-f04bc30e8b34",
-      "trackingCode": "0c06d5c8-f21d-44ce-a8f3-f04bc30e8b34",
-      "raw_description": "there is a pothole",
-      "rawDescription": "there is a pothole",
-      "image_url": "/uploads/1790026862437_Screenshot_2026-09-22_004041.jpg",
-      "imageUrl": "/uploads/1790026862437_Screenshot_2026-09-22_004041.jpg",
-      "latitude": 13.399316999999998,
-      "longitude": 80.118896,
-      "address_text": "GPS Location (13.3993, 80.1189)",
-      "addressText": "GPS Location (13.3993, 80.1189)",
+      "tracking_code": "2045f9f2-e9f5-4c24-b66d-9623ddeb2359",
+      "trackingCode": "2045f9f2-e9f5-4c24-b66d-9623ddeb2359",
+      "raw_description": "road pothole near my home",
+      "rawDescription": "road pothole near my home",
+      "image_url": "/uploads/1790056918849_ChatGPT_Image_Sep_22__2026__03_20_49_AM.jpg",
+      "imageUrl": "/uploads/1790056918849_ChatGPT_Image_Sep_22__2026__03_20_49_AM.jpg",
+      "latitude": 13.35705356154303,
+      "longitude": 80.1428794422908,
+      "address_text": "GPS Location (13.3571, 80.1429)",
+      "addressText": "GPS Location (13.3571, 80.1429)",
       "is_original_report": true,
-      "created_at": "2026-09-21T21:41:02.922Z",
-      "createdAt": "2026-09-21T21:41:02.922Z"
-    },
-    {
-      "id": "rep-1790027257720",
-      "incident_id": "inc-1790027257718-644",
-      "incidentId": "inc-1790027257718-644",
-      "citizen_id": "cit-101",
-      "citizenId": "cit-101",
-      "tracking_code": "9e719964-09bd-49cf-b5f4-99971fc90462",
-      "trackingCode": "9e719964-09bd-49cf-b5f4-99971fc90462",
-      "raw_description": "transformer broken near my home",
-      "rawDescription": "transformer broken near my home",
-      "image_url": "/uploads/1790027257651_Screenshot_2026-09-22_031631.jpg",
-      "imageUrl": "/uploads/1790027257651_Screenshot_2026-09-22_031631.jpg",
-      "latitude": 13.0676,
-      "longitude": 80.2187,
-      "address_text": "GPS Location (13.0676, 80.2187)",
-      "addressText": "GPS Location (13.0676, 80.2187)",
-      "is_original_report": true,
-      "created_at": "2026-09-21T21:47:37.718Z",
-      "createdAt": "2026-09-21T21:47:37.718Z"
+      "created_at": "2026-09-22T06:01:59.388Z",
+      "createdAt": "2026-09-22T06:01:59.388Z"
     }
   ],
   "aiAnalyses": [
@@ -292,8 +173,8 @@
       "created_at": "2026-09-21T10:00:00.000Z"
     },
     {
-      "id": "ai-1790026862926",
-      "incident_id": "inc-1790026862922-878",
+      "id": "ai-1790056919392",
+      "incident_id": "inc-1790056919388-754",
       "confidence_score": 0.98,
       "detected_category": "ROAD_POTHOLE",
       "detected_severity": "HIGH",
@@ -305,104 +186,41 @@
           "Estimated hazard risk score at 78/100 [HIGH].",
           "Assigned to department code: ROAD_MAINT."
         ],
-        "summary": "there is a pothole"
+        "summary": "road pothole near my home"
       },
-      "created_at": "2026-09-21T21:41:02.922Z"
-    },
-    {
-      "id": "ai-1790027257721",
-      "incident_id": "inc-1790027257718-644",
-      "confidence_score": 0.98,
-      "detected_category": "ELECTRICAL_HAZARD",
-      "detected_severity": "CRITICAL",
-      "suggested_department_code": "ELECTRICAL",
-      "extracted_features": {
-        "safetyRiskScore": 94,
-        "importantDetails": [
-          "Smart NLP categorized as ELECTRICAL_HAZARD based on keywords.",
-          "Estimated hazard risk score at 94/100 [CRITICAL].",
-          "Assigned to department code: ELECTRICAL."
-        ],
-        "summary": "transformer broken near my home"
-      },
-      "created_at": "2026-09-21T21:47:37.718Z"
+      "created_at": "2026-09-22T06:01:59.388Z"
     }
   ],
   "embeddings": [],
   "duplicateRelations": [],
   "resolutionEvidence": [
     {
-      "id": "ev-1790026725873",
-      "incident_id": "inc-case-001",
+      "id": "ev-1790056981317",
+      "incident_id": "inc-1790056919388-754",
       "officer_id": "user-worker-road-001",
-      "proof_image_url": "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&auto=format&fit=crop&q=80",
-      "resolution_notes": "Asphalt filled and leveled.",
+      "proof_image_url": "blob:http://localhost:3000/1f6afbcd-f965-4ca9-a4c7-f95f0b7e261c",
+      "resolution_notes": "done",
       "citizen_verified": true,
       "status": "CLOSED",
-      "created_at": "2026-09-21T21:38:45.873Z",
+      "created_at": "2026-09-22T06:03:01.317Z",
       "attempts": [
         {
           "attemptNumber": 1,
-          "submittedAt": "2026-09-21T21:38:45.873Z",
-          "proofImageUrl": "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&auto=format&fit=crop&q=80",
-          "notes": "Asphalt filled and leveled.",
-          "status": "PENDING"
-        }
-      ],
-      "reviewed_by": "Officer Sarah Jenkins",
-      "reviewed_at": "2026-09-21T21:38:45.921Z",
-      "citizen_feedback": "Pothole fixed perfectly!"
-    },
-    {
-      "id": "ev-1790026912821",
-      "incident_id": "inc-1790026862922-878",
-      "officer_id": "user-worker-road-001",
-      "proof_image_url": "blob:http://localhost:3000/0c3a32c4-ed9b-4fc8-bd14-9b2ced9cd565",
-      "resolution_notes": "solved",
-      "citizen_verified": false,
-      "status": "APPROVED",
-      "reviewed_by": "Officer Robert Chen",
-      "reviewed_at": "2026-09-21T21:51:51.616Z",
-      "created_at": "2026-09-21T21:41:52.821Z",
-      "attempts": [
-        {
-          "attemptNumber": 1,
-          "submittedAt": "2026-09-21T21:41:52.821Z",
-          "proofImageUrl": "blob:http://localhost:3000/0c3a32c4-ed9b-4fc8-bd14-9b2ced9cd565",
-          "notes": "solved",
-          "status": "APPROVED",
-          "reviewedBy": "Officer Robert Chen",
-          "reviewedAt": "2026-09-21T21:51:51.616Z"
-        }
-      ]
-    },
-    {
-      "id": "ev-1790027474516",
-      "incident_id": "inc-1790027257718-644",
-      "officer_id": "user-worker-elec-001",
-      "proof_image_url": "blob:http://localhost:3000/016d3671-7867-4bf2-9b29-2597b4b11c3d",
-      "resolution_notes": "solved",
-      "citizen_verified": true,
-      "status": "CLOSED",
-      "created_at": "2026-09-21T21:51:14.516Z",
-      "attempts": [
-        {
-          "attemptNumber": 1,
-          "submittedAt": "2026-09-21T21:51:14.516Z",
-          "proofImageUrl": "blob:http://localhost:3000/016d3671-7867-4bf2-9b29-2597b4b11c3d",
-          "notes": "solved",
+          "submittedAt": "2026-09-22T06:03:01.317Z",
+          "proofImageUrl": "blob:http://localhost:3000/1f6afbcd-f965-4ca9-a4c7-f95f0b7e261c",
+          "notes": "done",
           "status": "PENDING"
         }
       ],
       "reviewed_by": "Officer Robert Chen",
-      "reviewed_at": "2026-09-21T21:51:30.839Z",
+      "reviewed_at": "2026-09-22T06:03:10.194Z",
       "citizen_feedback": "Citizen verified repair completed."
     }
   ],
   "auditLogs": [
     {
-      "id": "audit_1790027531996",
-      "incident_id": "inc-1790027257718-644",
+      "id": "audit_1790057038248",
+      "incident_id": "inc-1790056919388-754",
       "performed_by": "Citizen",
       "action": "CITIZEN_APPROVED_RESOLUTION",
       "old_value": {
@@ -413,261 +231,55 @@
         "citizenVerifiedBy": "Citizen (Case Owner)"
       },
       "reason": "Citizen verified repair completed.",
-      "created_at": "2026-09-21T21:52:11.991Z"
+      "created_at": "2026-09-22T06:03:58.243Z"
     },
     {
-      "id": "audit-1790027511625-0.12761907995072874",
-      "incident_id": "inc-1790026862922-878",
-      "performed_by": "Officer Robert Chen",
-      "action": "AUTHORITY_APPROVED_EVIDENCE",
-      "reason": "Officer Officer Robert Chen reviewed and approved field resolution evidence. Case marked as RESOLVED.",
-      "created_at": "2026-09-21T21:51:51.616Z"
-    },
-    {
-      "id": "audit-1790027490843-0.9413902236833716",
-      "incident_id": "inc-1790027257718-644",
+      "id": "audit-1790056990198-0.13621612590448728",
+      "incident_id": "inc-1790056919388-754",
       "performed_by": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
       "action": "EVIDENCE_APPROVED",
       "old_value": {
         "status": "WAITING_FOR_APPROVAL",
-        "department_id": "33333333-3333-3333-3333-333333333333"
-      },
-      "new_value": {
-        "status": "PENDING_CITIZEN_VERIFICATION",
-        "approved_by": "Officer Robert Chen",
-        "approvedBy": "Officer Robert Chen",
-        "approved_at": "2026-09-21T21:51:30.839Z",
-        "approvedAt": "2026-09-21T21:51:30.839Z",
-        "changed_by": "Officer Robert Chen",
-        "changedBy": "Officer Robert Chen",
-        "changed_at": "2026-09-21T21:51:30.839Z",
-        "changedAt": "2026-09-21T21:51:30.839Z"
-      },
-      "reason": "Officer reviewed and approved worker field evidence.",
-      "created_at": "2026-09-21T21:51:30.843Z"
-    },
-    {
-      "id": "audit-1790027474524-jo3l7b",
-      "incident_id": "inc-1790027257718-644",
-      "performed_by": "Marcus Vance (Electrical Field Lead)",
-      "action": "WORKER_SUBMITTED_EVIDENCE",
-      "reason": "Field evidence submitted by Marcus Vance (Electrical Field Lead). Awaiting Authority Approval.",
-      "new_value": {
-        "proof_image_url": "blob:http://localhost:3000/016d3671-7867-4bf2-9b29-2597b4b11c3d",
-        "notes": "solved",
-        "gps": {
-          "latitude": 13.0676,
-          "longitude": 80.2187
-        },
-        "timestamp": "2026-09-21T21:51:14.516Z"
-      },
-      "created_at": "2026-09-21T21:51:14.516Z"
-    },
-    {
-      "id": "audit-1790027321481-naa6vk",
-      "incident_id": "inc-1790027257718-644",
-      "performed_by": "Marcus Vance (Electrical Field Lead)",
-      "action": "WORKER_ACCEPTED_JOB",
-      "reason": "Worker Marcus Vance (Electrical Field Lead) (Electrical) accepted the job assignment. Status updated to IN_PROGRESS.",
-      "created_at": "2026-09-21T21:48:41.479Z"
-    },
-    {
-      "id": "audit_1790027099561",
-      "incident_id": "inc-1790026862922-878",
-      "performed_by": "Citizen",
-      "action": "CITIZEN_APPROVED_RESOLUTION",
-      "old_value": {
-        "status": "PENDING_CITIZEN_VERIFICATION"
-      },
-      "new_value": {
-        "status": "CLOSED",
-        "citizenVerifiedBy": "Citizen (Case Owner)"
-      },
-      "reason": "Citizen verified repair completed.",
-      "created_at": "2026-09-21T21:44:59.552Z"
-    },
-    {
-      "id": "audit-1790027044638-0.31455242110554615",
-      "incident_id": "inc-1790026862922-878",
-      "performed_by": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
-      "action": "EVIDENCE_APPROVED",
-      "old_value": {
-        "status": "CLOSED",
         "department_id": "11111111-1111-1111-1111-111111111111"
       },
       "new_value": {
         "status": "PENDING_CITIZEN_VERIFICATION",
         "approved_by": "Officer Robert Chen",
         "approvedBy": "Officer Robert Chen",
-        "approved_at": "2026-09-21T21:44:04.635Z",
-        "approvedAt": "2026-09-21T21:44:04.635Z",
+        "approved_at": "2026-09-22T06:03:10.194Z",
+        "approvedAt": "2026-09-22T06:03:10.194Z",
         "changed_by": "Officer Robert Chen",
         "changedBy": "Officer Robert Chen",
-        "changed_at": "2026-09-21T21:44:04.635Z",
-        "changedAt": "2026-09-21T21:44:04.635Z"
+        "changed_at": "2026-09-22T06:03:10.194Z",
+        "changedAt": "2026-09-22T06:03:10.194Z"
       },
       "reason": "Officer reviewed and approved worker field evidence.",
-      "created_at": "2026-09-21T21:44:04.638Z"
+      "created_at": "2026-09-22T06:03:10.198Z"
     },
     {
-      "id": "audit_1790027001242",
-      "incident_id": "inc-1790026862922-878",
-      "performed_by": "Citizen",
-      "action": "CITIZEN_APPROVED_RESOLUTION",
-      "old_value": {
-        "status": "RESOLVED"
-      },
-      "new_value": {
-        "status": "CLOSED",
-        "citizenVerifiedBy": "Citizen (Case Owner)"
-      },
-      "reason": "Citizen verified repair completed.",
-      "created_at": "2026-09-21T21:43:21.238Z"
-    },
-    {
-      "id": "audit-1790026942744-0.6403465471539864",
-      "incident_id": "inc-1790026862922-878",
-      "performed_by": "Officer Robert Chen",
-      "action": "AUTHORITY_APPROVED_EVIDENCE",
-      "reason": "Officer Officer Robert Chen reviewed and approved field resolution evidence. Case marked as RESOLVED.",
-      "created_at": "2026-09-21T21:42:22.740Z"
-    },
-    {
-      "id": "audit-1790026912826-ehs0cv5",
-      "incident_id": "inc-1790026862922-878",
+      "id": "audit-1790056981321-fc03im",
+      "incident_id": "inc-1790056919388-754",
       "performed_by": "Alex Rivera (Road Maintenance Lead)",
       "action": "WORKER_SUBMITTED_EVIDENCE",
       "reason": "Field evidence submitted by Alex Rivera (Road Maintenance Lead). Awaiting Authority Approval.",
       "new_value": {
-        "proof_image_url": "blob:http://localhost:3000/0c3a32c4-ed9b-4fc8-bd14-9b2ced9cd565",
-        "notes": "solved",
+        "proof_image_url": "blob:http://localhost:3000/1f6afbcd-f965-4ca9-a4c7-f95f0b7e261c",
+        "notes": "done",
         "gps": {
-          "latitude": 13.399316999999998,
-          "longitude": 80.118896
+          "latitude": 13.35705356154303,
+          "longitude": 80.1428794422908
         },
-        "timestamp": "2026-09-21T21:41:52.821Z"
+        "timestamp": "2026-09-22T06:03:01.317Z"
       },
-      "created_at": "2026-09-21T21:41:52.821Z"
+      "created_at": "2026-09-22T06:03:01.317Z"
     },
     {
-      "id": "audit-1790026900167-jdluw",
-      "incident_id": "inc-1790026862922-878",
+      "id": "audit-1790056969037-0566hd",
+      "incident_id": "inc-1790056919388-754",
       "performed_by": "Alex Rivera (Road Maintenance Lead)",
       "action": "WORKER_ACCEPTED_JOB",
       "reason": "Worker Alex Rivera (Road Maintenance Lead) (Road Maintenance) accepted the job assignment. Status updated to IN_PROGRESS.",
-      "created_at": "2026-09-21T21:41:40.165Z"
-    },
-    {
-      "id": "audit_1790026726042",
-      "incident_id": "inc-case-001",
-      "performed_by": "Citizen",
-      "action": "CITIZEN_APPROVED_RESOLUTION",
-      "old_value": {
-        "status": "PENDING_CITIZEN_VERIFICATION"
-      },
-      "new_value": {
-        "status": "CLOSED",
-        "citizenVerifiedBy": "Citizen (Case Owner)"
-      },
-      "reason": "Pothole fixed perfectly!",
-      "created_at": "2026-09-21T21:38:46.037Z"
-    },
-    {
-      "id": "audit-1790026725925-0.09697188734679829",
-      "incident_id": "inc-case-001",
-      "performed_by": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
-      "action": "EVIDENCE_APPROVED",
-      "old_value": {
-        "status": "WAITING_FOR_APPROVAL",
-        "department_id": "ROAD_MAINTENANCE",
-        "assigned_officer_id": "user-worker-road-001"
-      },
-      "new_value": {
-        "status": "PENDING_CITIZEN_VERIFICATION",
-        "approved_by": "Officer Sarah Jenkins",
-        "approvedBy": "Officer Sarah Jenkins",
-        "approved_at": "2026-09-21T21:38:45.921Z",
-        "approvedAt": "2026-09-21T21:38:45.921Z",
-        "changed_by": "Officer Sarah Jenkins",
-        "changedBy": "Officer Sarah Jenkins",
-        "changed_at": "2026-09-21T21:38:45.921Z",
-        "changedAt": "2026-09-21T21:38:45.921Z"
-      },
-      "reason": "Authority operational update via dashboard.",
-      "created_at": "2026-09-21T21:38:45.925Z"
-    },
-    {
-      "id": "audit-1790026725876-bqmytd",
-      "incident_id": "inc-case-001",
-      "performed_by": "Alex Rivera (Road Maintenance Lead)",
-      "action": "WORKER_SUBMITTED_EVIDENCE",
-      "reason": "Field evidence submitted by Alex Rivera (Road Maintenance Lead). Awaiting Authority Approval.",
-      "new_value": {
-        "proof_image_url": "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&auto=format&fit=crop&q=80",
-        "notes": "Asphalt filled and leveled.",
-        "gps": {},
-        "timestamp": "2026-09-21T21:38:45.873Z"
-      },
-      "created_at": "2026-09-21T21:38:45.873Z"
-    },
-    {
-      "id": "audit-1790026725779-x8c9vc",
-      "incident_id": "inc-case-001",
-      "performed_by": "Alex Rivera (Road Maintenance Lead)",
-      "action": "WORKER_ACCEPTED_JOB",
-      "reason": "Worker Alex Rivera (Road Maintenance Lead) (Road Maintenance) accepted the job assignment. Status updated to IN_PROGRESS.",
-      "created_at": "2026-09-21T21:38:45.777Z"
-    },
-    {
-      "id": "audit-1790026723891-0.8955755088431593",
-      "incident_id": "inc-case-001",
-      "performed_by": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
-      "action": "DEPARTMENT_REASSIGNED",
-      "old_value": {
-        "status": "SUBMITTED",
-        "department_id": "ROAD_MAINTENANCE",
-        "assigned_officer_id": "user-worker-road-001"
-      },
-      "new_value": {
-        "status": "ASSIGNED",
-        "previous_department": "Road Maintenance",
-        "previousDepartment": "Road Maintenance",
-        "previous_worker": "Alex Rivera (Road Maintenance Lead)",
-        "previousWorker": "Alex Rivera (Road Maintenance Lead)",
-        "old_assigned_at": "2026-09-21T10:00:00.000Z",
-        "oldAssignedAt": "2026-09-21T10:00:00.000Z",
-        "new_department": "Road Maintenance",
-        "newDepartment": "Road Maintenance",
-        "new_worker": "Alex Rivera (Road Maintenance Lead)",
-        "newWorker": "Alex Rivera (Road Maintenance Lead)",
-        "new_assigned_at": "2026-09-21T21:38:43.889Z",
-        "newAssignedAt": "2026-09-21T21:38:43.889Z",
-        "department_id": "ROAD_MAINTENANCE",
-        "departmentId": "ROAD_MAINTENANCE",
-        "departmentCode": "ROAD_MAINTENANCE",
-        "departmentName": "Road Maintenance",
-        "assignedDepartment": "Road Maintenance",
-        "departments": {
-          "id": "ROAD_MAINTENANCE",
-          "code": "ROAD_MAINTENANCE",
-          "name": "Road Maintenance"
-        },
-        "assigned_officer_id": "user-worker-road-001",
-        "assigned_worker_id": "user-worker-road-001",
-        "assignedWorkerId": "user-worker-road-001",
-        "assignedWorker": "Alex Rivera (Road Maintenance Lead)",
-        "assignedWorkerName": "Alex Rivera (Road Maintenance Lead)",
-        "assigned_by": "Officer Robert Chen",
-        "assignedBy": "Officer Robert Chen",
-        "assigned_at": "2026-09-21T21:38:43.889Z",
-        "assignedAt": "2026-09-21T21:38:43.889Z",
-        "changed_by": "Officer Robert Chen",
-        "changedBy": "Officer Robert Chen",
-        "changed_at": "2026-09-21T21:38:43.889Z",
-        "changedAt": "2026-09-21T21:38:43.889Z"
-      },
-      "reason": "Authority operational update via dashboard.",
-      "created_at": "2026-09-21T21:38:43.891Z"
+      "created_at": "2026-09-22T06:02:48.998Z"
     }
   ]
 }

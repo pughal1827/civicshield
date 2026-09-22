@@ -60,9 +60,15 @@ export async function POST(
     if (action === 'APPROVE') {
       evidenceStatus = 'APPROVED';
       updatedIncident = await mockStore.updateIncident(incident.id, {
-        status: 'RESOLVED',
-        resolved_at: serverNow,
-        resolved_by: officerName,
+        status: 'PENDING_CITIZEN_VERIFICATION',
+        approved_by: officerName,
+        approvedBy: officerName,
+        approved_at: serverNow,
+        approvedAt: serverNow,
+        changed_by: officerName,
+        changedBy: officerName,
+        changed_at: serverNow,
+        changedAt: serverNow,
       });
 
       // Update resolution evidence record
@@ -93,7 +99,7 @@ export async function POST(
         incident_id: incident.id,
         performed_by: officerName,
         action: 'AUTHORITY_APPROVED_EVIDENCE',
-        reason: `Officer ${officerName} reviewed and approved field resolution evidence. Case marked as RESOLVED.`,
+        reason: `Officer ${officerName} reviewed and approved field resolution evidence. Case marked as PENDING_CITIZEN_VERIFICATION.`,
         created_at: serverNow,
       });
     } else {
