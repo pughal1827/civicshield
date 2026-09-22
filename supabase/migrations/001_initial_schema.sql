@@ -80,6 +80,7 @@ CREATE TABLE IF NOT EXISTS reports (
     latitude DECIMAL(10, 8) NOT NULL,
     longitude DECIMAL(11, 8) NOT NULL,
     address_text TEXT,
+    telegram_chat_id BIGINT,
     is_original_report BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -102,7 +103,7 @@ CREATE TABLE IF NOT EXISTS embeddings (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     incident_id UUID NOT NULL REFERENCES incidents(id) ON DELETE CASCADE,
     report_id UUID REFERENCES reports(id) ON DELETE CASCADE,
-    embedding vector(768) NOT NULL, -- 768 dimensions for Google text-embedding-004
+    embedding vector(3072) NOT NULL, -- 3072 dimensions for Google gemini-embedding-001
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

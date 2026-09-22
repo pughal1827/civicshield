@@ -174,7 +174,8 @@ export default function ReportIssuePage() {
         if (uploadJson.success && uploadJson.data?.url) {
           finalUploadedImageUrl = uploadJson.data.url;
         } else {
-          throw new Error(uploadJson.error?.message || 'Photo upload failed. Please try again.');
+          setSubmissionError(uploadJson.error?.message || 'Photo upload failed. Please try again.');
+          return;
         }
       }
 
@@ -211,7 +212,11 @@ export default function ReportIssuePage() {
           // Ignore localStorage errors
         }
       } else {
-        throw new Error(json.error?.message || 'Failed to submit report. Please try again.');
+        setSubmissionError(json.error?.message || 'Failed to submit report. Please try again.');
+        if (json.error?.code === 'IMAGE_VALIDATION_ERROR') {
+          setStep(1);
+        }
+        return;
       }
     } catch (err: unknown) {
       console.error('Submission error:', err);

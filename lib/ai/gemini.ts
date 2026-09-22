@@ -63,6 +63,14 @@ CRITICAL CONSTRAINTS:
 - Do NOT output markdown backticks wrapping the JSON. Return raw JSON string conforming strictly to the schema.
 `;
 
+const CIVIC_VOICE_SYSTEM_PROMPT = `
+${CIVIC_SYSTEM_PROMPT}
+
+ADDITIONAL INSTRUCTIONS FOR VOICE ANALYSIS:
+You are receiving an audio recording of a citizen reporting an issue.
+8. Extracted Address: The citizen will state their location verbally. Extract this location (street name, landmark, etc.) as accurately as possible into a field called "extractedAddress". If no location is mentioned, omit this field or leave it blank.
+`;
+
 export async function analyzeCivicIssue(
   description: string,
   imageUrl?: string
@@ -225,6 +233,126 @@ export async function analyzeCivicIssue(
           `Auto-routed to department: ${smartMatch.departmentCode}.`,
         ],
       },
+      isFallback: true,
+    };
+  }
+}
+
+export async function analyzeCivicVoiceIssue(
+  audioUrl: string
+): Promise<{ analysis: AIAnalysisOutput; isFallback: boolean }> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  const isProduction = getAppMode() === 'production';
+
+  if (!apiKey) {
+    if (isProduction) {
+      throw new GeminiConfigurationError();
+    }
+    console.warn('[AI Engine] GEMINI_API_KEY not set. Cannot process audio.');
+    return {
+      analysis: FALLBACK_AI_ANALYSIS,
+      isFallback: true,
+    };
+  }
+
+  try {
+    const ai = new GoogleGenAI({ apiKey });
+    const contents: any[] = [CIVIC_VOICE_SYSTEM_PROMPT];
+
+    let base64Data: string | null = null;
+    let mimeType = 'audio/x-wav'; // Default Twilio format
+
+    try {
+      const audioResponse = await fetch(audioUrl, { signal: AbortSignal.timeout(10000) });
+      if (audioResponse.ok) {
+        const arrayBuffer = await audioResponse.arrayBuffer();
+        base64Data = Buffer.from(arrayBuffer).toString('base64');
+        mimeType = audioResponse.headers.get('content-type') || 'audio/x-wav';
+        console.log(`[AI Engine] Fetched audio from ${audioUrl} (${mimeType})`);
+      } else {
+        throw new Error(`Audio URL fetch failed with status ${audioResponse.status}`);
+      }
+    } catch (audioError) {
+      console.error('[AI Engine] Failed to load audio for voice analysis:', audioError);
+      throw audioError;
+    }
+
+    if (base64Data) {
+      contents.push({
+        inlineData: {
+          data: base64Data,
+          mimeType: mimeType.split(';')[0],
+        },
+      });
+    }
+
+    contents.push("Please analyze this citizen voice report and extract the category, severity, summary, and their stated address.");
+
+    const candidateModels = [PRIMARY_MODEL, ...FALLBACK_MODELS];
+    let rawText = '';
+    let usedModel = PRIMARY_MODEL;
+
+    for (const modelName of candidateModels) {
+      try {
+        console.log(`[AI Engine] Sending voice classification request to Gemini (${modelName})...`);
+        const generatePromise = ai.models.generateContent({
+          model: modelName,
+          contents,
+          config: {
+            responseMimeType: 'application/json',
+            temperature: 0.1,
+          },
+        });
+
+        // 8s strict timeout for audio processing
+        const response = await Promise.race([
+          generatePromise,
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('AI Model Response Timeout')), 8000)),
+        ]);
+
+        if (response.text && response.text.trim()) {
+          rawText = response.text.trim();
+          usedModel = modelName;
+          break;
+        }
+      } catch (modelErr: any) {
+        const errMsg = String(modelErr?.message || modelErr);
+        console.warn(`[AI Engine] Model ${modelName} unavailable (${errMsg.slice(0, 120)}).`);
+        
+        if (errMsg.includes('429') || errMsg.includes('quota') || errMsg.includes('RESOURCE_EXHAUSTED')) {
+          console.warn('[AI Engine] Quota limit detected.');
+          break;
+        }
+      }
+    }
+
+    if (!rawText) {
+      throw new Error('Gemini API quota reached or models unavailable for voice analysis.');
+    }
+
+    const cleanJson = rawText.replace(/^\`\`\`json\s*/i, '').replace(/\s*\`\`\`$/i, '').trim();
+    const parsedJson = JSON.parse(cleanJson);
+
+    const normalizedJson = {
+      category: parsedJson.category || parsedJson.detected_category,
+      summary: parsedJson.summary || 'Voice reported issue.',
+      severity: parsedJson.severity || parsedJson.detected_severity || 'MEDIUM',
+      safetyRiskScore: Number(parsedJson.safetyRiskScore ?? parsedJson.safety_risk_score ?? parsedJson.safety_risk ?? 50),
+      recommendedDepartmentCode: parsedJson.recommendedDepartmentCode || parsedJson.recommended_department_code || parsedJson.suggested_department_code || 'ROAD_MAINT',
+      confidenceScore: Number(parsedJson.confidenceScore ?? parsedJson.confidence_score ?? parsedJson.confidence ?? 0.85),
+      importantDetails: parsedJson.importantDetails || parsedJson.important_details || [],
+      extractedAddress: parsedJson.extractedAddress || parsedJson.extracted_address || parsedJson.address || undefined,
+    };
+
+    const validatedAnalysis = aiAnalysisOutputSchema.parse(normalizedJson);
+
+    console.log(`[AI Engine] [${usedModel}] Analyzed voice issue: Category=${validatedAnalysis.category}, Address=${validatedAnalysis.extractedAddress}`);
+
+    return { analysis: validatedAnalysis, isFallback: false };
+  } catch (error) {
+    console.error('[AI Engine] Error during Gemini voice processing:', error);
+    return {
+      analysis: FALLBACK_AI_ANALYSIS,
       isFallback: true,
     };
   }

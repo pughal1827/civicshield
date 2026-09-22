@@ -53,6 +53,18 @@ export interface MockAuditLog {
   created_at: string;
 }
 
+export interface MockTelegramSession {
+  chat_id: number;
+  state: string;
+  temp_data: {
+    imageUrl?: string;
+    latitude?: number;
+    longitude?: number;
+    description?: string;
+  };
+  updated_at: string;
+}
+
 class MockDataStore {
   private incidents: Map<string, any> = new Map();
   private reports: Map<string, any> = new Map();
@@ -61,6 +73,7 @@ class MockDataStore {
   private duplicateRelations: MockDuplicateRelation[] = [];
   private resolutionEvidence: Map<string, MockResolutionEvidence> = new Map();
   private auditLogs: MockAuditLog[] = [];
+  private telegramSessions: Map<number, MockTelegramSession> = new Map();
   private dataFilePath: string;
 
   constructor() {
@@ -102,6 +115,9 @@ class MockDataStore {
           for (const ev of data.resolutionEvidence) this.resolutionEvidence.set(ev.incident_id, ev);
         }
         if (Array.isArray(data.auditLogs)) this.auditLogs = data.auditLogs;
+        if (Array.isArray(data.telegramSessions)) {
+          for (const ts of data.telegramSessions) this.telegramSessions.set(ts.chat_id, ts);
+        }
 
         if (this.incidents.size === 0) {
           this.seedInitialSingleExample();
@@ -239,6 +255,7 @@ class MockDataStore {
       duplicateRelations: this.duplicateRelations,
       resolutionEvidence: Array.from(this.resolutionEvidence.values()),
       auditLogs: this.auditLogs,
+      telegramSessions: Array.from(this.telegramSessions.values()),
     }, null, 2);
   }
 
@@ -503,6 +520,22 @@ class MockDataStore {
     return this.auditLogs.filter((l) => l.incident_id === incidentId);
   }
 
+  // --- Telegram Sessions Methods ---
+  public getTelegramSession(chatId: number) {
+    return this.telegramSessions.get(chatId) || null;
+  }
+
+  public setTelegramSession(session: MockTelegramSession) {
+    this.telegramSessions.set(session.chat_id, session);
+    this.syncPersist();
+    return session;
+  }
+
+  public clearTelegramSession(chatId: number) {
+    this.telegramSessions.delete(chatId);
+    this.syncPersist();
+  }
+
   public clearStore() {
     this.incidents.clear();
     this.reports.clear();
@@ -511,6 +544,7 @@ class MockDataStore {
     this.duplicateRelations = [];
     this.resolutionEvidence.clear();
     this.auditLogs = [];
+    this.telegramSessions.clear();
     this.syncPersist();
   }
 }

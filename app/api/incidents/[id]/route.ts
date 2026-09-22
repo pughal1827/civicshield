@@ -446,6 +446,56 @@ export async function PATCH(
       }
     }
 
+    // Check if we need to send a Telegram push notification for citizen verification
+    if (updatePayload.status === 'PENDING_CITIZEN_VERIFICATION' || updatePayload.status === 'RESOLVED') {
+      let chatId = null;
+      let evidenceUrl = null;
+      if (config.isMock) {
+        // Find report for this incident
+        const reps = mockStore.getReportsByIncident(incidentId);
+        if (reps.length > 0 && (reps[0].telegram_chat_id || reps[0].telegramChatId)) {
+          chatId = reps[0].telegram_chat_id || reps[0].telegramChatId;
+        }
+        const ev = mockStore.getResolutionEvidence(incidentId) as any;
+        evidenceUrl = ev?.image_url || ev?.imageUrl;
+      } else {
+        const supabase = createAdminClient();
+        const { data: rep } = await supabase.from('reports').select('telegram_chat_id').eq('incident_id', incidentId).not('telegram_chat_id', 'is', null).limit(1).maybeSingle();
+        if (rep?.telegram_chat_id) {
+          chatId = rep.telegram_chat_id;
+        }
+        const { data: ev } = await supabase.from('resolution_evidence').select('image_url').eq('incident_id', incidentId).maybeSingle();
+        evidenceUrl = ev?.image_url;
+      }
+
+      if (chatId) {
+        try {
+          const { sendTelegramMessage, sendTelegramPhoto } = await import('@/lib/telegram/bot');
+          const text = `🔔 **Issue Update: ${updatedIncident.case_id || updatedIncident.caseId}**\n\nThe municipal authority has repaired this issue and provided evidence. Does this look resolved to you?`;
+          
+          const options = {
+            parse_mode: 'Markdown',
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  { text: '✅ Yes, looks good', callback_data: `verify_${incidentId}` },
+                  { text: '❌ No, still broken', callback_data: `reject_${incidentId}` }
+                ]
+              ]
+            }
+          };
+
+          if (evidenceUrl) {
+            await sendTelegramPhoto(chatId, evidenceUrl, text, options);
+          } else {
+            await sendTelegramMessage(chatId, text, options);
+          }
+        } catch (botErr) {
+          console.error('Failed to send telegram notification:', botErr);
+        }
+      }
+    }
+
     return createSuccessResponse({
       incident: updatedIncident,
       updatedFields: Object.keys(updatePayload),

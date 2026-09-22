@@ -3,6 +3,8 @@ import { getSessionByToken, getUserByEmail } from '@/lib/auth/session';
 import { mockStore } from '@/lib/db/mock-store';
 import { createErrorResponse, createSuccessResponse } from '@/lib/utils/api-error';
 import { normalizeDepartmentCode } from '@/lib/constants/departments';
+import { getStorageConfig } from '@/lib/db/storage-config';
+import { createAdminClient } from '@/lib/db/supabase-admin';
 
 // Helper to normalize department matching
 function isIncidentAssignedToWorkerDept(incident: any, worker: any): boolean {
@@ -18,6 +20,7 @@ function isIncidentAssignedToWorkerDept(incident: any, worker: any): boolean {
 
 export async function GET(req: NextRequest) {
   try {
+    const config = getStorageConfig();
     const token =
       req.cookies.get('civicshield_session')?.value ||
       req.headers.get('authorization')?.replace('Bearer ', '') ||
@@ -40,7 +43,25 @@ export async function GET(req: NextRequest) {
       return createErrorResponse('Access Denied: Worker authentication required.', 'UNAUTHORIZED', 401);
     }
 
-    const allIncidents = await mockStore.getAllIncidents();
+    let allIncidents: any[] = [];
+    
+    if (config.isMock) {
+      allIncidents = mockStore.getAllIncidents();
+    } else {
+      const supabase = createAdminClient();
+      const { data, error } = await supabase
+        .from('incidents')
+        .select('*, departments(name, code), users:assigned_officer_id(full_name)')
+        .is('master_incident_id', null)
+        .order('priority_score', { ascending: false })
+        .order('created_at', { ascending: false });
+        
+      if (error) {
+        console.error('Supabase fetch error:', error);
+        return createErrorResponse('Database query failed.', 'SERVICE_UNAVAILABLE', 503);
+      }
+      allIncidents = data || [];
+    }
 
     // STRICT DEPARTMENT ISOLATION AT BACKEND LEVEL
     const workerIncidents = allIncidents.filter((inc) => isIncidentAssignedToWorkerDept(inc, user));
