@@ -11,6 +11,8 @@ import { calculatePriorityScore } from '@/lib/priority/priority-engine';
 import { findClusteringMasterIncident, findDuplicateCandidates, createPendingDuplicateRelations } from '@/lib/duplicates/duplicate-detector';
 import { createErrorResponse, createSuccessResponse } from '@/lib/utils/api-error';
 import { logger } from '@/lib/logging/logger';
+import { validateImageExif } from '@/lib/validation/exif';
+import { validateImageContent } from '@/lib/validation/vision';
 
 const submitReportSchema = z.object({
   description: z.string().min(10, 'Please enter a description of at least 10 characters.'),
@@ -51,13 +53,72 @@ export async function POST(req: NextRequest) {
     }
 
     const { description, category: userCategory, imageUrl, audioUrl, reporterId, latitude, longitude, addressText } = parseResult.data;
-    const finalCitizenId = citizenIdHeader || reporterId || 'cit-101';
+    const rawCitizenId = citizenIdHeader || reporterId || 'cit-101';
+    
+    let dbCitizenId: string | null = rawCitizenId;
+    let telegramChatId: number | null = null;
+    
+    if (rawCitizenId.startsWith('telegram-')) {
+      telegramChatId = parseInt(rawCitizenId.replace('telegram-', ''), 10);
+      dbCitizenId = null; // Supabase requires a valid UUID
+    } else if (rawCitizenId.startsWith('cit-') || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawCitizenId)) {
+      dbCitizenId = null; // Invalid UUID fallback
+    }
+    
+    const finalCitizenId = rawCitizenId; // Keep raw for MockStore
 
-    // 2. Generate Tracking Code & Default Case ID
+    // 2. Pre-process Image for Validation
+    let imageBuffer: Buffer | null = null;
+    if (imageUrl && imageUrl.trim().length > 0) {
+      try {
+        if (imageUrl.startsWith('data:')) {
+          const matches = imageUrl.match(/^data:([^;]+);base64,(.+)$/);
+          if (matches) {
+            imageBuffer = Buffer.from(matches[2], 'base64');
+          }
+        } else if (imageUrl.startsWith('/')) {
+          const fs = await import('fs/promises');
+          const path = await import('path');
+          const localPath = path.join(process.cwd(), 'public', imageUrl.replace(/^\//, ''));
+          imageBuffer = await fs.readFile(localPath);
+        } else if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+          const imageResponse = await fetch(imageUrl, { signal: AbortSignal.timeout(5000) });
+          if (imageResponse.ok) {
+            const arrayBuffer = await imageResponse.arrayBuffer();
+            imageBuffer = Buffer.from(arrayBuffer);
+          }
+        }
+      } catch (err) {
+        logger.warn('SubmitAPI', 'Failed to parse image for validation', { error: String(err) });
+      }
+    }
+
+    // 3. Strict Image Validation (EXIF + Vision)
+    if (imageBuffer) {
+      // Check EXIF data (Time & Location)
+      const exifResult = await validateImageExif(imageBuffer, latitude, longitude);
+      if (!exifResult.isValid) {
+        return createErrorResponse(
+          exifResult.reason || 'Image failed geographic or temporal validation.',
+          'IMAGE_VALIDATION_ERROR',
+          400
+        );
+      }
+
+      // Check Content (Transformers.js Zero-Shot)
+      const visionResult = await validateImageContent(imageBuffer);
+      if (!visionResult.isValid) {
+        return createErrorResponse(
+          visionResult.reason || 'Image content is not relevant to a civic issue.',
+          'IMAGE_VALIDATION_ERROR',
+          400
+        );
+      }
+    }
+
+    // 4. Generate Tracking Code & Default Case ID
     const randomNum = Math.floor(1000 + Math.random() * 9000);
-    const trackingCode = crypto.randomUUID(); // Secure unique citizen tracking UUID
-
-    // 3. Invoke AI Multi-modal Vision Verification & Text Analysis
+    // 5. Invoke AI Multi-modal Vision Verification & Text Analysis
     logger.info('SubmitAPI', `Running AI multi-modal vision & text verification...`);
     const [aiResult, imageVerification] = await Promise.all([
       analyzeCivicIssue(description, imageUrl || undefined),
@@ -74,11 +135,11 @@ export async function POST(req: NextRequest) {
     const finalCategory = userCategory || (imageVerification.predictedCategory as any) || analysis.category;
     const summary = analysis.summary || description.slice(0, 120);
 
-    // 4. Generate Text Embedding Vector
+    // 6. Generate Text Embedding Vector
     const normalizedText = buildNormalizedEmbeddingText(finalCategory, description, summary);
     const embeddingVector = await generateTextEmbedding(normalizedText);
 
-    // 5. Intelligent Multi-Citizen Complaint Clustering Check
+    // 7. Intelligent Multi-Citizen Complaint Clustering Check
     logger.info('SubmitAPI', `Checking for nearby matching active complaints to cluster...`);
     const clusterResult = await findClusteringMasterIncident({
       latitude,
@@ -147,6 +208,7 @@ export async function POST(req: NextRequest) {
             .insert({
               incident_id: master.id,
               tracking_code: trackingCode,
+              telegram_chat_id: telegramChatId,
               raw_description: description,
               image_url: imageUrl || null,
               latitude,
@@ -182,7 +244,7 @@ export async function POST(req: NextRequest) {
     const caseId = `CS-${randomNum}`;
     const title = `${finalCategory.replace(/_/g, ' ')} near ${addressText.split(',')[0] || addressText}`;
 
-    // 6. Calculate Priority Engine Score for new issue
+    // 8. Calculate Priority Engine Score for new issue
     const priorityResult = calculatePriorityScore({
       category: finalCategory,
       aiSeverity: analysis.severity,
@@ -193,7 +255,7 @@ export async function POST(req: NextRequest) {
       affectedCitizensCount: 1,
     });
 
-    // 7. Department & Database Category Mapping
+    // 9. Department & Database Category Mapping
     const deptCodeMap: Record<string, { id: string; name: string; code: string }> = {
       ROAD_MAINT: { id: '11111111-1111-1111-1111-111111111111', name: 'Road Maintenance & Infrastructure', code: 'ROAD_MAINT' },
       SANITATION: { id: '22222222-2222-2222-2222-222222222222', name: 'Sanitation & Waste Management', code: 'SANITATION' },
@@ -352,7 +414,6 @@ export async function POST(req: NextRequest) {
             category: dbCategory,
             severity: analysis.severity,
             status: 'SUBMITTED',
-            reporter_id: finalCitizenId,
             priority_score: priorityResult.priorityScore,
             priority_factors: {
               safetyRisk: priorityResult.factorScores.safetyRiskScore,
@@ -385,7 +446,8 @@ export async function POST(req: NextRequest) {
           .from('reports')
           .insert({
             incident_id: incident.id,
-            citizen_id: finalCitizenId,
+            reporter_id: dbCitizenId,
+            telegram_chat_id: telegramChatId,
             tracking_code: trackingCode,
             raw_description: description,
             image_url: imageUrl || null,
@@ -497,7 +559,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 8. Run Secondary Duplicate Detection Flagging
+    // 10. Run Secondary Duplicate Detection Flagging
     let duplicateCount = 0;
     try {
       const duplicateCandidates = await findDuplicateCandidates({

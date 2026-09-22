@@ -353,17 +353,30 @@ export default function AuthorityComplaintDetailsPage({ params }: { params: Prom
             <span>🟡 WAITING FOR APPROVAL</span>
           </span>
         );
+      case 'PENDING_CITIZEN_VERIFICATION':
+        return (
+          <span className="font-extrabold text-emerald-900 bg-emerald-100 border border-emerald-300 px-3 py-1 rounded-full text-xs flex items-center gap-1 shadow-2xs">
+            <span>🟢 PENDING CITIZEN VERIFICATION</span>
+          </span>
+        );
+      case 'CLOSED':
       case 'RESOLVED':
       case 'VERIFIED':
         return (
-          <span className="font-extrabold text-emerald-900 bg-emerald-100 border border-emerald-300 px-3 py-1 rounded-full text-xs flex items-center gap-1 shadow-2xs">
-            <span>🟢 RESOLVED</span>
+          <span className="font-extrabold text-emerald-950 bg-emerald-200 border border-emerald-400 px-3 py-1 rounded-full text-xs flex items-center gap-1 shadow-2xs">
+            <span>🟢 CLOSED / VERIFIED</span>
           </span>
         );
       case 'EVIDENCE_REJECTED':
         return (
           <span className="font-extrabold text-rose-900 bg-rose-100 border border-rose-300 px-3 py-1 rounded-full text-xs flex items-center gap-1 shadow-2xs">
             <span>🔴 EVIDENCE REJECTED</span>
+          </span>
+        );
+      case 'REOPENED':
+        return (
+          <span className="font-extrabold text-purple-900 bg-purple-100 border border-purple-300 px-3 py-1 rounded-full text-xs flex items-center gap-1 shadow-2xs">
+            <span>🟣 REOPENED</span>
           </span>
         );
       default:
@@ -819,7 +832,7 @@ export default function AuthorityComplaintDetailsPage({ params }: { params: Prom
           </div>
 
           {/* Worker Field Evidence & Verification Review Card */}
-          {(resolutionEvidence || incident.status === 'WAITING_FOR_APPROVAL' || incident.status === 'WORK_COMPLETED' || incident.status === 'AWAITING_VERIFICATION' || incident.status === 'RESOLVED' || incident.status === 'EVIDENCE_REJECTED') && (
+          {(resolutionEvidence || incident.status === 'WAITING_FOR_APPROVAL' || incident.status === 'WORK_COMPLETED' || incident.status === 'AWAITING_VERIFICATION' || incident.status === 'PENDING_CITIZEN_VERIFICATION' || incident.status === 'RESOLVED' || incident.status === 'CLOSED' || incident.status === 'EVIDENCE_REJECTED' || incident.status === 'REOPENED') && (
             <div className="bg-white rounded-2xl border border-emerald-300 p-6 space-y-4 shadow-sm">
               <div className="border-b border-emerald-100 pb-3 flex items-center justify-between">
                 <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
@@ -845,14 +858,63 @@ export default function AuthorityComplaintDetailsPage({ params }: { params: Prom
                   </p>
                 </div>
 
-                {incident.status === 'EVIDENCE_REJECTED' && (incident.rejection_reason || incident.rejectionReason) && (
-                  <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-900 text-xs font-medium space-y-0.5">
-                    <span className="font-bold text-rose-700 block">Rejection Feedback Sent to Worker:</span>
-                    <p>&quot;{incident.rejection_reason || incident.rejectionReason}&quot;</p>
+                {/* STATUS: PENDING CITIZEN VERIFICATION */}
+                {incident.status === 'PENDING_CITIZEN_VERIFICATION' && (
+                  <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-xl text-emerald-950 text-xs font-medium space-y-1">
+                    <span className="font-extrabold text-emerald-900 flex items-center gap-1.5 text-xs">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-600" /> Evidence Approved by Authority
+                    </span>
+                    <p className="text-emerald-800">
+                      Approved by {incident.approved_by || incident.approvedBy || 'Authority Officer'} on {formatExactDate(incident.approved_at || incident.approvedAt)}.
+                      Complaint is currently waiting for final citizen resolution verification.
+                    </p>
                   </div>
                 )}
 
-                {incident.status !== 'RESOLVED' && incident.status !== 'VERIFIED' && (
+                {/* STATUS: CLOSED / VERIFIED */}
+                {(incident.status === 'CLOSED' || incident.status === 'RESOLVED' || incident.status === 'VERIFIED') && (
+                  <div className="p-4 bg-emerald-100 border border-emerald-300 rounded-xl text-emerald-950 text-xs font-medium space-y-1">
+                    <span className="font-extrabold text-emerald-950 flex items-center gap-1.5 text-xs">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-700" /> Citizen Verified & Closed
+                    </span>
+                    <p className="text-emerald-900">
+                      Verified and closed on {formatExactDate(incident.citizen_verified_at || incident.citizenVerifiedAt || incident.resolved_at || incident.resolvedAt)}.
+                    </p>
+                  </div>
+                )}
+
+                {/* STATUS: REOPENED */}
+                {incident.status === 'REOPENED' && (
+                  <div className="p-4 bg-purple-50 border border-purple-200 rounded-xl text-purple-950 text-xs font-medium space-y-1">
+                    <span className="font-extrabold text-purple-900 flex items-center gap-1.5 text-xs">
+                      <AlertTriangle className="h-4 w-4 text-purple-600" /> Citizen Rejected Resolution (Reopened)
+                    </span>
+                    <p className="text-purple-900 font-semibold">
+                      Citizen Rejection Reason: &quot;{incident.citizen_rejection_reason || incident.citizenRejectionReason || 'Resolution was unsatisfactory.'}&quot;
+                    </p>
+                    <p className="text-slate-600 text-[11px] mt-1">
+                      Officer can reassign the worker lead or change the assigned department below.
+                    </p>
+                  </div>
+                )}
+
+                {/* STATUS: EVIDENCE REJECTED */}
+                {incident.status === 'EVIDENCE_REJECTED' && (
+                  <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-900 text-xs font-medium space-y-1">
+                    <span className="font-extrabold text-rose-900 flex items-center gap-1.5 text-xs">
+                      <AlertTriangle className="h-4 w-4 text-rose-600" /> Evidence Rejected by Authority
+                    </span>
+                    <p className="text-rose-900 font-semibold">
+                      Rejection Reason: &quot;{incident.rejection_reason || incident.rejectionReason || 'Field repair evidence requires revision.'}&quot;
+                    </p>
+                    <p className="text-slate-600 text-[11px] mt-1">
+                      Worker lead has been notified to fix the issue and resubmit new evidence.
+                    </p>
+                  </div>
+                )}
+
+                {/* ACTION BUTTONS: ONLY SHOW WHEN WAITING FOR APPROVAL */}
+                {(incident.status === 'WAITING_FOR_APPROVAL' || incident.status === 'WORK_COMPLETED' || incident.status === 'AWAITING_VERIFICATION') && (
                   <>
                     {!showRejectionForm ? (
                       <div className="pt-2 flex flex-col sm:flex-row gap-2">

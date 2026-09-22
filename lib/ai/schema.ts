@@ -35,6 +35,7 @@ export const aiAnalysisOutputSchema = z.object({
   recommendedDepartmentCode: aiDepartmentCodeEnum,
   confidenceScore: z.number().min(0.0).max(1.0),
   importantDetails: z.array(z.string()).default([]),
+  extractedAddress: z.string().optional(),
 });
 
 export type AIAnalysisOutput = z.infer<typeof aiAnalysisOutputSchema>;
