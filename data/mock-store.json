@@ -331,6 +331,88 @@
         "code": "DRAINAGE"
       },
       "imageUrl": null
+    },
+    {
+      "id": "inc-1790091059238-230",
+      "case_id": "CS-9829",
+      "caseId": "CS-9829",
+      "title": "FLOOD near GPS Geo-Pin (13.33983",
+      "summary": "fix park benches",
+      "category": "FLOOD",
+      "severity": "LOW",
+      "status": "SUBMITTED",
+      "priority_score": 24,
+      "priorityScore": 24,
+      "priority_factors": {
+        "safetyRisk": 32,
+        "publicImpact": 25,
+        "severity": 15,
+        "recurrence": 20,
+        "locationSensitivity": 25,
+        "explanation": "Priority 24/100 [LOW] calculated via Civic Risk Matrix: Safety Risk (32 @ 35%), Severity (15 @ 25%), Public Impact (25 @ 20%), Recurrence (20 @ 10%), Location (25 @ 10%)."
+      },
+      "latitude": 13.339831,
+      "longitude": 80.194331,
+      "department_id": "11111111-1111-1111-1111-111111111111",
+      "departmentId": "11111111-1111-1111-1111-111111111111",
+      "master_incident_id": null,
+      "masterIncidentId": null,
+      "is_duplicate_flagged": false,
+      "report_count": 1,
+      "reportCount": 1,
+      "affected_citizens_count": 1,
+      "affectedCitizensCount": 1,
+      "created_at": "2026-09-22T15:29:48.397Z",
+      "createdAt": "2026-09-22T15:29:48.397Z",
+      "updated_at": "2026-09-22T15:30:59.241Z",
+      "address": "GPS Geo-Pin (13.33983, 80.19433)",
+      "departments": {
+        "id": "11111111-1111-1111-1111-111111111111",
+        "name": "Road Maintenance & Infrastructure",
+        "code": "ROAD_MAINT"
+      },
+      "imageUrl": null
+    },
+    {
+      "id": "inc-1790091183396-520",
+      "case_id": "CS-9089",
+      "caseId": "CS-9089",
+      "title": "FLOOD near GPS Geo-Pin (13.33984",
+      "summary": "fix the park benches",
+      "category": "FLOOD",
+      "severity": "LOW",
+      "status": "SUBMITTED",
+      "priority_score": 24,
+      "priorityScore": 24,
+      "priority_factors": {
+        "safetyRisk": 32,
+        "publicImpact": 25,
+        "severity": 15,
+        "recurrence": 20,
+        "locationSensitivity": 25,
+        "explanation": "Priority 24/100 [LOW] calculated via Civic Risk Matrix: Safety Risk (32 @ 35%), Severity (15 @ 25%), Public Impact (25 @ 20%), Recurrence (20 @ 10%), Location (25 @ 10%)."
+      },
+      "latitude": 13.339841,
+      "longitude": 80.194331,
+      "department_id": "11111111-1111-1111-1111-111111111111",
+      "departmentId": "11111111-1111-1111-1111-111111111111",
+      "master_incident_id": null,
+      "masterIncidentId": null,
+      "is_duplicate_flagged": false,
+      "report_count": 1,
+      "reportCount": 1,
+      "affected_citizens_count": 1,
+      "affectedCitizensCount": 1,
+      "created_at": "2026-09-22T15:31:52.184Z",
+      "createdAt": "2026-09-22T15:31:52.184Z",
+      "updated_at": "2026-09-22T15:33:03.396Z",
+      "address": "GPS Geo-Pin (13.33984, 80.19433)",
+      "departments": {
+        "id": "11111111-1111-1111-1111-111111111111",
+        "name": "Road Maintenance & Infrastructure",
+        "code": "ROAD_MAINT"
+      },
+      "imageUrl": null
     }
   ],
   "reports": [
@@ -453,6 +535,46 @@
       "is_original_report": true,
       "created_at": "2026-09-22T14:41:57.574Z",
       "createdAt": "2026-09-22T14:41:57.574Z"
+    },
+    {
+      "id": "rep-1790091059259",
+      "incident_id": "inc-1790091059238-230",
+      "incidentId": "inc-1790091059238-230",
+      "citizen_id": "cit-101",
+      "citizenId": "cit-101",
+      "tracking_code": "34cfa24f-0e4a-4fab-b236-a732606cd41c",
+      "trackingCode": "34cfa24f-0e4a-4fab-b236-a732606cd41c",
+      "raw_description": "fix park benches",
+      "rawDescription": "fix park benches",
+      "image_url": "/uploads/1790090727097_WhatsApp_Image_2026-09-22_at_10.30.55_AM.jpeg",
+      "imageUrl": "/uploads/1790090727097_WhatsApp_Image_2026-09-22_at_10.30.55_AM.jpeg",
+      "latitude": 13.339831,
+      "longitude": 80.194331,
+      "address_text": "GPS Geo-Pin (13.33983, 80.19433)",
+      "addressText": "GPS Geo-Pin (13.33983, 80.19433)",
+      "is_original_report": true,
+      "created_at": "2026-09-22T15:29:48.397Z",
+      "createdAt": "2026-09-22T15:29:48.397Z"
+    },
+    {
+      "id": "rep-1790091183401",
+      "incident_id": "inc-1790091183396-520",
+      "incidentId": "inc-1790091183396-520",
+      "citizen_id": "cit-101",
+      "citizenId": "cit-101",
+      "tracking_code": "41105ee7-94f7-4994-8518-2fb48360e657",
+      "trackingCode": "41105ee7-94f7-4994-8518-2fb48360e657",
+      "raw_description": "fix the park benches",
+      "rawDescription": "fix the park benches",
+      "image_url": "/uploads/1790091018194_WhatsApp_Image_2026-09-22_at_10.30.55_AM.jpeg",
+      "imageUrl": "/uploads/1790091018194_WhatsApp_Image_2026-09-22_at_10.30.55_AM.jpeg",
+      "latitude": 13.339841,
+      "longitude": 80.194331,
+      "address_text": "GPS Geo-Pin (13.33984, 80.19433)",
+      "addressText": "GPS Geo-Pin (13.33984, 80.19433)",
+      "is_original_report": true,
+      "created_at": "2026-09-22T15:31:52.184Z",
+      "createdAt": "2026-09-22T15:31:52.184Z"
     }
   ],
   "aiAnalyses": [
@@ -623,6 +745,236 @@
         }
       },
       "created_at": "2026-09-22T14:41:57.574Z"
+    },
+    {
+      "id": "ai-1790091059273",
+      "incident_id": "inc-1790091059238-230",
+      "confidence_score": 0.98,
+      "detected_category": "PUBLIC_INFRA_DAMAGE",
+      "detected_severity": "LOW",
+      "suggested_department_code": "PUBLIC_WORKS",
+      "extracted_features": {
+        "safetyRiskScore": 32,
+        "importantDetails": [
+          "Smart NLP categorized as PUBLIC_INFRA_DAMAGE based on description keywords.",
+          "Calculated hazard risk score: 32/100 (LOW).",
+          "Auto-routed to department: PUBLIC_WORKS."
+        ],
+        "summary": "fix park benches",
+        "imageVerification": {
+          "isMatch": false,
+          "matchStatus": "MISMATCHED",
+          "similarityScore": 0.1501,
+          "confidenceScore": 0.1501,
+          "isAnomaly": true,
+          "anomalyScore": 0.0621,
+          "isFraudOrSpam": false,
+          "anomalyFlags": [
+            "LOW_INFORMATION"
+          ],
+          "yoloDetections": [
+            {
+              "label": "vehicle",
+              "raw_label": "car",
+              "confidence": 0.8571,
+              "bounding_box": [
+                107,
+                151,
+                233,
+                224
+              ],
+              "class_id": 2
+            },
+            {
+              "label": "vehicle",
+              "raw_label": "car",
+              "confidence": 0.8425,
+              "bounding_box": [
+                222,
+                139,
+                280,
+                179
+              ],
+              "class_id": 2
+            },
+            {
+              "label": "vehicle",
+              "raw_label": "car",
+              "confidence": 0.812,
+              "bounding_box": [
+                285,
+                130,
+                329,
+                164
+              ],
+              "class_id": 2
+            },
+            {
+              "label": "vehicle",
+              "raw_label": "car",
+              "confidence": 0.7827,
+              "bounding_box": [
+                320,
+                133,
+                386,
+                198
+              ],
+              "class_id": 2
+            },
+            {
+              "label": "person",
+              "raw_label": "person",
+              "confidence": 0.4224,
+              "bounding_box": [
+                423,
+                130,
+                445,
+                174
+              ],
+              "class_id": 0
+            },
+            {
+              "label": "stop sign",
+              "raw_label": "stop sign",
+              "confidence": 0.4055,
+              "bounding_box": [
+                638,
+                55,
+                683,
+                108
+              ],
+              "class_id": 11
+            }
+          ],
+          "predictedCategory": "FLOOD",
+          "predictedSeverity": "HIGH",
+          "decisionAction": "FLAGGED_MISMATCH",
+          "processingTimeMs": 3246,
+          "modelsUsed": [
+            "yolov8",
+            "clip",
+            "random_forest",
+            "isolation_forest"
+          ],
+          "source": "python_ai_engine"
+        }
+      },
+      "created_at": "2026-09-22T15:29:48.397Z"
+    },
+    {
+      "id": "ai-1790091183405",
+      "incident_id": "inc-1790091183396-520",
+      "confidence_score": 0.98,
+      "detected_category": "PUBLIC_INFRA_DAMAGE",
+      "detected_severity": "LOW",
+      "suggested_department_code": "PUBLIC_WORKS",
+      "extracted_features": {
+        "safetyRiskScore": 32,
+        "importantDetails": [
+          "Smart NLP categorized as PUBLIC_INFRA_DAMAGE based on description keywords.",
+          "Calculated hazard risk score: 32/100 (LOW).",
+          "Auto-routed to department: PUBLIC_WORKS."
+        ],
+        "summary": "fix the park benches",
+        "imageVerification": {
+          "isMatch": false,
+          "matchStatus": "MISMATCHED",
+          "similarityScore": 0.1547,
+          "confidenceScore": 0.1547,
+          "isAnomaly": true,
+          "anomalyScore": 0.0621,
+          "isFraudOrSpam": false,
+          "anomalyFlags": [
+            "LOW_INFORMATION"
+          ],
+          "yoloDetections": [
+            {
+              "label": "vehicle",
+              "raw_label": "car",
+              "confidence": 0.8571,
+              "bounding_box": [
+                107,
+                151,
+                233,
+                224
+              ],
+              "class_id": 2
+            },
+            {
+              "label": "vehicle",
+              "raw_label": "car",
+              "confidence": 0.8425,
+              "bounding_box": [
+                222,
+                139,
+                280,
+                179
+              ],
+              "class_id": 2
+            },
+            {
+              "label": "vehicle",
+              "raw_label": "car",
+              "confidence": 0.812,
+              "bounding_box": [
+                285,
+                130,
+                329,
+                164
+              ],
+              "class_id": 2
+            },
+            {
+              "label": "vehicle",
+              "raw_label": "car",
+              "confidence": 0.7827,
+              "bounding_box": [
+                320,
+                133,
+                386,
+                198
+              ],
+              "class_id": 2
+            },
+            {
+              "label": "person",
+              "raw_label": "person",
+              "confidence": 0.4224,
+              "bounding_box": [
+                423,
+                130,
+                445,
+                174
+              ],
+              "class_id": 0
+            },
+            {
+              "label": "stop sign",
+              "raw_label": "stop sign",
+              "confidence": 0.4055,
+              "bounding_box": [
+                638,
+                55,
+                683,
+                108
+              ],
+              "class_id": 11
+            }
+          ],
+          "predictedCategory": "FLOOD",
+          "predictedSeverity": "HIGH",
+          "decisionAction": "FLAGGED_MISMATCH",
+          "processingTimeMs": 2318,
+          "modelsUsed": [
+            "yolov8",
+            "clip",
+            "random_forest",
+            "isolation_forest"
+          ],
+          "source": "python_ai_engine"
+        }
+      },
+      "created_at": "2026-09-22T15:31:52.184Z"
     }
   ],
   "embeddings": [
@@ -9930,6 +10282,14 @@
   ],
   "auditLogs": [
     {
+      "id": "audit-1790103196521-620tvf",
+      "incident_id": "421b7744-a1a7-46f7-8e3a-7d1003257020",
+      "performed_by": "Suresh Kumar (Sanitation Inspector)",
+      "action": "WORKER_ACCEPTED_JOB",
+      "reason": "Worker Suresh Kumar (Sanitation Inspector) (Garbage / Sanitation) accepted the job assignment. Status updated to IN_PROGRESS.",
+      "created_at": "2026-09-22T18:53:10.593Z"
+    },
+    {
       "id": "audit_1790027531996",
       "incident_id": "inc-1790027257718-644",
       "performed_by": "Citizen",
@@ -10198,5 +10558,6 @@
       "reason": "Authority operational update via dashboard.",
       "created_at": "2026-09-21T21:38:43.891Z"
     }
-  ]
+  ],
+  "telegramSessions": []
 }

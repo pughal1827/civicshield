@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { WorkerSidebar } from './worker-sidebar';
 import { WorkerTopbar } from './worker-topbar';
+import { getStoredWorkerUser, getWorkerAuthHeaders, setStoredWorker } from '@/lib/auth/worker-client';
 
 interface WorkerLayoutProps {
   children: React.ReactNode;
@@ -12,38 +13,63 @@ interface WorkerLayoutProps {
 export function WorkerLayout({ children }: WorkerLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [workerUser, setWorkerUser] = useState<any>(null);
+  const [workerUser, setWorkerUser] = useState<any>(() => getStoredWorkerUser());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (pathname === '/worker/login') return;
 
-    fetch('/api/auth/me')
+    const stored = getStoredWorkerUser();
+    if (stored) {
+      setWorkerUser(stored);
+    }
+
+    fetch('/api/auth/me', {
+      credentials: 'same-origin',
+      headers: getWorkerAuthHeaders(),
+    })
       .then((res) => res.json())
       .then((json) => {
         if (json.success && json.data?.user) {
           const user = json.data.user;
           if (user.role === 'WORKER') {
             setWorkerUser(user);
+            setStoredWorker(user);
           } else {
             // Not a worker - redirect to worker login
             router.push('/worker/login');
           }
+        } else if (stored && stored.role === 'WORKER') {
+          setWorkerUser(stored);
         } else {
           // Fallback demo worker context for development if session cookie not present
-          setWorkerUser({
+          const defaultWorker = {
+            id: 'user-worker-road-001',
+            email: 'road.worker@civicshield.demo',
             fullName: 'Alex Rivera (Road Maintenance Lead)',
+            departmentCode: 'ROAD_MAINT',
             departmentName: 'Road Maintenance',
             role: 'WORKER',
-          });
+          };
+          setWorkerUser(defaultWorker);
+          setStoredWorker(defaultWorker);
         }
       })
       .catch(() => {
-        setWorkerUser({
-          fullName: 'Alex Rivera (Road Maintenance Lead)',
-          departmentName: 'Road Maintenance',
-          role: 'WORKER',
-        });
+        if (stored && stored.role === 'WORKER') {
+          setWorkerUser(stored);
+        } else {
+          const defaultWorker = {
+            id: 'user-worker-road-001',
+            email: 'road.worker@civicshield.demo',
+            fullName: 'Alex Rivera (Road Maintenance Lead)',
+            departmentCode: 'ROAD_MAINT',
+            departmentName: 'Road Maintenance',
+            role: 'WORKER',
+          };
+          setWorkerUser(defaultWorker);
+          setStoredWorker(defaultWorker);
+        }
       })
       .finally(() => setLoading(false));
   }, [router, pathname]);

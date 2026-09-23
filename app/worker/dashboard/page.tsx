@@ -19,6 +19,7 @@ import {
   Filter
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { getWorkerAuthHeaders } from '@/lib/auth/worker-client';
 
 interface WorkerIncident {
   id: string;
@@ -52,7 +53,10 @@ export default function WorkerDashboardPage() {
   const fetchWorkerDashboard = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/worker/incidents');
+      const res = await fetch('/api/worker/incidents', {
+        credentials: 'same-origin',
+        headers: getWorkerAuthHeaders(),
+      });
       if (res.ok) {
         const json = await res.json();
         if (json.success && json.data) {

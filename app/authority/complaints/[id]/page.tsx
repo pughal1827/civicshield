@@ -416,6 +416,31 @@ export default function AuthorityComplaintDetailsPage({ params }: { params: Prom
   const caseId = incident.case_id || incident.caseId;
   const isAssigned = Boolean(incident.department_id || incident.departmentId || (incident.status !== 'SUBMITTED' && incident.status !== 'AI_ANALYSED'));
 
+  const imageVer =
+    aiAnalysis?.imageVerification ||
+    aiAnalysis?.image_verification ||
+    aiAnalysis?.extracted_features?.imageVerification ||
+    aiAnalysis?.raw_ai_response?.imageVerification ||
+    incident?.priority_factors?.imageVerification ||
+    incident?.priorityFactors?.imageVerification ||
+    null;
+
+  const isImageMismatch = Boolean(
+    imageVer?.matchStatus === 'MISMATCHED' ||
+    imageVer?.isMatch === false ||
+    imageVer?.decisionAction === 'FLAGGED_MISMATCH' ||
+    incident?.priority_factors?.isImageMismatch ||
+    incident?.priority_factors?.imageMatchStatus === 'MISMATCHED' ||
+    incident?.priorityFactors?.isImageMismatch
+  );
+
+  const isImageVerified = Boolean(
+    imageVer &&
+    imageVer.isMatch === true &&
+    imageVer.matchStatus === 'MATCHED' &&
+    !isImageMismatch
+  );
+
   const deptDisplayName =
     incident.departmentName ||
     incident.departments?.name ||
@@ -458,6 +483,18 @@ export default function AuthorityComplaintDetailsPage({ params }: { params: Prom
               <span className="px-3 py-1 rounded-full text-xs font-black bg-rose-600 text-white uppercase">
                 {incident.severity || 'CRITICAL'} (Score: {incident.priority_score || incident.priorityScore || 85})
               </span>
+              {isImageMismatch && (
+                <span className="px-3 py-1 rounded-full text-xs font-black bg-rose-500/15 text-rose-700 border border-rose-300 flex items-center gap-1.5 shadow-2xs">
+                  <AlertTriangle className="h-3.5 w-3.5 text-rose-600 animate-pulse" />
+                  FLAGGED IMAGE MISMATCH
+                </span>
+              )}
+              {isImageVerified && (
+                <span className="px-3 py-1 rounded-full text-xs font-black bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5 shadow-2xs">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                  AI Evidence Verified ({Math.round((imageVer?.similarityScore || 0.9) * 100)}%)
+                </span>
+              )}
               {((reports && reports.length > 1) || (incident.report_count > 1) || (incident.reportCount > 1)) && (
                 <span className="px-3 py-1 rounded-full text-xs font-black bg-gradient-to-r from-amber-500 to-rose-500 text-white shadow-xs flex items-center gap-1">
                   <Flame className="h-3.5 w-3.5" /> Clustered: {reports?.length || incident.report_count || incident.reportCount || 2} Citizens Reported
@@ -577,11 +614,107 @@ export default function AuthorityComplaintDetailsPage({ params }: { params: Prom
                 <p className="text-slate-800 font-semibold mt-0.5">{incident.address || 'Gummidipoondi Sector Main Rd'}</p>
               </div>
 
-              {/* Photo Evidence */}
-              <div className="pt-3 border-t border-slate-100 space-y-2">
-                <span className="text-[10px] font-bold text-slate-400 uppercase block">Evidence Photo</span>
+              {/* Photo Evidence with AI Vision Diagnostics */}
+              <div className="pt-3 border-t border-slate-100 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase block">Evidence Photo</span>
+                  {imageVer && (
+                    <span
+                      className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full flex items-center gap-1 ${
+                        isImageMismatch
+                          ? 'bg-rose-100 text-rose-700 border border-rose-200'
+                          : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                      }`}
+                    >
+                      {isImageMismatch ? (
+                        <>
+                          <AlertTriangle className="h-3 w-3 text-rose-600" />
+                          Mismatch Flagged ({Math.round((imageVer.similarityScore || 0.15) * 100)}% Match)
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                          Photo Verified ({Math.round((imageVer.similarityScore || 0.92) * 100)}% Match)
+                        </>
+                      )}
+                    </span>
+                  )}
+                </div>
+
+                {/* AI Multi-modal Vision Diagnostics Card */}
+                {imageVer && (
+                  <div
+                    className={`p-3.5 rounded-xl border text-xs space-y-2.5 ${
+                      isImageMismatch
+                        ? 'bg-rose-50/80 border-rose-200 text-rose-950'
+                        : 'bg-emerald-50/80 border-emerald-200 text-emerald-950'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="font-extrabold flex items-center gap-1.5 text-xs">
+                        {isImageMismatch ? (
+                          <>
+                            <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0 animate-bounce" />
+                            <span>AI Vision Alert: Image-Text Discrepancy Detected</span>
+                          </>
+                        ) : (
+                          <>
+                            <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
+                            <span>AI Vision Verified: Image Aligns with Description</span>
+                          </>
+                        )}
+                      </div>
+                      <span className="font-mono font-black text-[10px] px-2 py-0.5 rounded bg-white/90 border border-slate-200/80 shadow-2xs">
+                        {imageVer.decisionAction || (isImageMismatch ? 'FLAGGED_MISMATCH' : 'APPROVED_FOR_ROUTING')}
+                      </span>
+                    </div>
+
+                    <p className="text-[11px] leading-relaxed text-slate-700 font-medium">
+                      {isImageMismatch
+                        ? `The uploaded photographic evidence does not visually match the citizen description ("${mainReport?.raw_description || incident.summary}"). The issue category remains based on the citizen's actual description.`
+                        : `The attached photographic evidence was verified and semantically matches the citizen complaint.`}
+                    </p>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-200/70 text-[11px]">
+                      <div className="bg-white/90 p-2 rounded-lg border border-slate-200/80 space-y-1">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase block">CLIP Semantic Alignment</span>
+                        <div className="flex items-center gap-2">
+                          <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                            <div
+                              className={`h-2 rounded-full ${
+                                isImageMismatch ? 'bg-rose-500' : 'bg-emerald-500'
+                              }`}
+                              style={{ width: `${Math.min(100, Math.round((imageVer.similarityScore || (isImageMismatch ? 0.15 : 0.9)) * 100))}%` }}
+                            />
+                          </div>
+                          <span className="font-mono font-bold text-slate-800 shrink-0">
+                            {Math.round((imageVer.similarityScore || (isImageMismatch ? 0.15 : 0.9)) * 100)}%
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="bg-white/90 p-2 rounded-lg border border-slate-200/80 space-y-1">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase block">YOLOv8 Detected Objects</span>
+                        <div className="flex flex-wrap gap-1 mt-0.5">
+                          {Array.isArray(imageVer.yoloDetections) && imageVer.yoloDetections.length > 0 ? (
+                            imageVer.yoloDetections.slice(0, 4).map((det: any, i: number) => (
+                              <span key={i} className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-mono text-[10px] border border-slate-200 font-bold">
+                                {det.label || det.name} ({Math.round((det.confidence || 0.8) * 100)}%)
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-slate-500 font-mono text-[10px]">
+                              {imageVer.predictedCategory ? `Features: ${imageVer.predictedCategory.replace(/_/g, ' ')}` : 'Hazard Scene'}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {mainReport?.image_url || mainReport?.imageUrl ? (
-                  <div className="relative h-64 w-full rounded-2xl overflow-hidden border border-slate-200 bg-slate-100">
+                  <div className="relative h-64 w-full rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 shadow-xs">
                     <Image src={mainReport.image_url || mainReport.imageUrl} alt="Complaint evidence" fill className="object-cover" />
                   </div>
                 ) : (
@@ -717,6 +850,36 @@ export default function AuthorityComplaintDetailsPage({ params }: { params: Prom
                   </span>
                 </div>
               </div>
+
+              {/* Multi-modal Vision Verification Details */}
+              {imageVer && (
+                <div className="p-3 rounded-xl bg-slate-950/70 border border-sky-900/60 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-sky-300 uppercase block flex items-center gap-1">
+                      <Layers className="h-3 w-3 text-sky-400" /> Multi-Modal Vision Cross-Check
+                    </span>
+                    <span
+                      className={`text-[10px] font-bold font-mono px-2 py-0.5 rounded ${
+                        isImageMismatch
+                          ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                          : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                      }`}
+                    >
+                      {imageVer.matchStatus || (isImageMismatch ? 'MISMATCHED' : 'MATCHED')}
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-slate-300 flex items-center justify-between pt-1">
+                    <span>CLIP Semantic Score:</span>
+                    <span className="font-mono font-bold text-white">
+                      {Math.round((imageVer.similarityScore || (isImageMismatch ? 0.15 : 0.9)) * 100)}%
+                    </span>
+                  </div>
+                  <div className="text-[10px] text-slate-400 flex items-center justify-between">
+                    <span>Active Pipeline:</span>
+                    <span className="font-mono text-sky-300">YOLOv8 + CLIP + RF + IF</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

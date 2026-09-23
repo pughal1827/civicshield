@@ -20,6 +20,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { clearStoredWorker } from '@/lib/auth/worker-client';
 
 interface WorkerSidebarProps {
   workerName?: string;
@@ -47,6 +48,7 @@ export function WorkerSidebar({
   ];
 
   const handleSignOut = async () => {
+    clearStoredWorker();
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
     } catch {

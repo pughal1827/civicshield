@@ -24,6 +24,7 @@ import {
   Filter
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { getWorkerAuthHeaders } from '@/lib/auth/worker-client';
 
 interface WorkerTask {
   id: string;
@@ -65,7 +66,10 @@ export default function DepartmentWorkerPortalPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('/api/worker/incidents')
+    fetch('/api/worker/incidents', {
+      credentials: 'same-origin',
+      headers: getWorkerAuthHeaders(),
+    })
       .then((res) => res.json())
       .then((json) => {
         if (json.success && json.data?.incidents && json.data.incidents.length > 0) {

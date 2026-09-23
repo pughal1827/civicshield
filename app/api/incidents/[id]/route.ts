@@ -120,17 +120,31 @@ export async function GET(
       return createErrorResponse('Incident not found.', 'NOT_FOUND', 404);
     }
 
-    // Combine text from citizen reports, title, and summary for high-fidelity AI classification
+    // Combine text from citizen reports, summary, and description
     const combinedText = [
-      incident.title,
-      incident.summary,
       ...reports.map((r: any) => r.raw_description || r.rawDescription || ''),
-      incident.address,
+      incident.summary,
+      incident.description,
+      incident.title,
     ]
       .filter(Boolean)
       .join(' ');
 
     const dynamicAiMatch = smartClassifyComplaint(combinedText);
+
+    const suggestedDeptCode = (
+      aiAnalysis?.suggested_department_code ||
+      aiAnalysis?.recommended_department_code ||
+      dynamicAiMatch.departmentCode ||
+      'ROAD_MAINT'
+    ) as keyof typeof DEPARTMENT_NAMES;
+
+    const imageVerificationData =
+      aiAnalysis?.extracted_features?.imageVerification ||
+      aiAnalysis?.raw_ai_response?.imageVerification ||
+      incident.priority_factors?.imageVerification ||
+      incident.priorityFactors?.imageVerification ||
+      null;
 
     // Build enriched real AI Analysis object
     const finalAiAnalysis = {
@@ -142,12 +156,9 @@ export async function GET(
       category: aiAnalysis?.detected_category || aiAnalysis?.category || dynamicAiMatch.category,
       detected_severity: incident.severity || aiAnalysis?.detected_severity || dynamicAiMatch.severity,
       severity: incident.severity || aiAnalysis?.detected_severity || dynamicAiMatch.severity,
-      suggested_department_code:
-        aiAnalysis?.suggested_department_code ||
-        aiAnalysis?.recommended_department_code ||
-        dynamicAiMatch.departmentCode,
+      suggested_department_code: suggestedDeptCode,
       suggested_department_name:
-        DEPARTMENT_NAMES[dynamicAiMatch.departmentCode] ||
+        DEPARTMENT_NAMES[suggestedDeptCode] ||
         incident.departments?.name ||
         incident.departmentName ||
         'Road Maintenance & Infrastructure',
@@ -160,6 +171,8 @@ export async function GET(
         aiAnalysis?.extracted_features?.keywords && aiAnalysis.extracted_features.keywords.length > 0
           ? aiAnalysis.extracted_features.keywords
           : dynamicAiMatch.extractedKeywords,
+      image_verification: imageVerificationData,
+      imageVerification: imageVerificationData,
       reasoning: dynamicAiMatch.reasoning,
       created_at: aiAnalysis?.created_at || incident.created_at || new Date().toISOString(),
     };

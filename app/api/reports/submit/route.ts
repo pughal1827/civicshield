@@ -134,7 +134,15 @@ export async function POST(req: NextRequest) {
     ]);
 
     const { analysis, isFallback } = aiResult;
-    const finalCategory = userCategory || (imageVerification.predictedCategory as any) || analysis.category;
+    // Category resolution rule:
+    // 1. Citizen explicitly selected category (if valid and not 'OTHER')
+    // 2. AI Text Analysis category (from Gemini or Smart NLP classifier)
+    // 3. Image verification predicted category ONLY IF image is a confirmed match (isMatch === true)
+    // 4. Default fallback: 'PUBLIC_INFRA_DAMAGE'
+    const finalCategory = 
+      userCategory 
+        ? userCategory 
+        : (analysis?.category || (imageVerification?.isMatch ? (imageVerification.predictedCategory as any) : null) || 'PUBLIC_INFRA_DAMAGE');
     const summary = analysis.summary || description.slice(0, 120);
 
     // 6. Generate Text Embedding Vector
@@ -312,6 +320,12 @@ export async function POST(req: NextRequest) {
           recurrence: priorityResult.factorScores.recurrenceScore,
           locationSensitivity: priorityResult.factorScores.locationSensitivityScore,
           explanation: priorityResult.explanationSummary,
+          imageMatchStatus: imageVerification.matchStatus,
+          imageDecisionAction: imageVerification.decisionAction,
+          imageSimilarityScore: imageVerification.similarityScore,
+          isImageMismatch: !imageVerification.isMatch,
+          yoloDetections: imageVerification.yoloDetections,
+          imageVerification,
         },
         latitude,
         longitude,
@@ -424,6 +438,12 @@ export async function POST(req: NextRequest) {
               recurrence: priorityResult.factorScores.recurrenceScore,
               locationSensitivity: priorityResult.factorScores.locationSensitivityScore,
               explanation: priorityResult.explanationSummary,
+              imageMatchStatus: imageVerification.matchStatus,
+              imageDecisionAction: imageVerification.decisionAction,
+              imageSimilarityScore: imageVerification.similarityScore,
+              isImageMismatch: !imageVerification.isMatch,
+              yoloDetections: imageVerification.yoloDetections,
+              imageVerification,
             },
             latitude,
             longitude,
@@ -500,6 +520,12 @@ export async function POST(req: NextRequest) {
             recurrence: priorityResult.factorScores.recurrenceScore,
             locationSensitivity: priorityResult.factorScores.locationSensitivityScore,
             explanation: priorityResult.explanationSummary,
+            imageMatchStatus: imageVerification.matchStatus,
+            imageDecisionAction: imageVerification.decisionAction,
+            imageSimilarityScore: imageVerification.similarityScore,
+            isImageMismatch: !imageVerification.isMatch,
+            yoloDetections: imageVerification.yoloDetections,
+            imageVerification,
           },
           latitude,
           longitude,

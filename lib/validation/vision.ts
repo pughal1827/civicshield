@@ -22,31 +22,36 @@ export interface VisionValidationResult {
 export async function validateImageContent(imageBuffer: Buffer): Promise<VisionValidationResult> {
   let tempFilePath: string | null = null;
   try {
-    if (!classifierPipeline) {
-      logger.info('VisionValidation', 'Loading zero-shot image classification model...');
-      // Using a fast, lightweight CLIP model for zero-shot image classification
-      classifierPipeline = await pipeline('zero-shot-image-classification', 'Xenova/clip-vit-base-patch32');
-    }
+    // Fast check to prevent blocking request loop if pipeline is slow
+    const classificationPromise = (async () => {
+      if (!classifierPipeline) {
+        logger.info('VisionValidation', 'Loading zero-shot image classification model...');
+        classifierPipeline = await pipeline('zero-shot-image-classification', 'Xenova/clip-vit-base-patch32');
+      }
 
-    // Write buffer to a temporary file because transformers.js pipeline expects a file path or URL
-    tempFilePath = path.join(os.tmpdir(), `vision-test-${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`);
-    await fs.writeFile(tempFilePath, imageBuffer);
+      tempFilePath = path.join(os.tmpdir(), `vision-test-${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`);
+      await fs.writeFile(tempFilePath, imageBuffer);
 
-    const candidateLabels = [
-      'street damage', 
-      'garbage pile', 
-      'public infrastructure', 
-      'water leak', 
-      'outdoor road',
-      'an indoor scene', 
-      'a person or selfie', 
-      'a close-up of a random object', 
-      'a document or text screenshot', 
-      'an unrelated photo'
-    ];
+      const candidateLabels = [
+        'street damage', 
+        'garbage pile', 
+        'public infrastructure', 
+        'water leak', 
+        'outdoor road',
+        'an indoor scene', 
+        'a person or selfie', 
+        'a close-up of a random object', 
+        'a document or text screenshot', 
+        'an unrelated photo'
+      ];
 
-    logger.info('VisionValidation', 'Running zero-shot classification on image...');
-    const results = await classifierPipeline(tempFilePath, candidateLabels);
+      return await classifierPipeline(tempFilePath, candidateLabels);
+    })();
+
+    const results = await Promise.race([
+      classificationPromise,
+      new Promise<any>((resolve) => setTimeout(() => resolve(null), 2000)),
+    ]);
 
     // Results is an array of objects: { label: string, score: number } sorted by score descending
     if (results && results.length > 0) {

@@ -22,6 +22,7 @@ export async function saveAIAnalysisMetadata(
           safetyRiskScore: analysis.safetyRiskScore,
           importantDetails: analysis.importantDetails,
           summary: analysis.summary,
+          imageVerification: rawResponse?.imageVerification || null,
         },
       })
       .select()

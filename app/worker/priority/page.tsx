@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Flame, MapPin, Clock, Eye, AlertTriangle, Shield, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { getWorkerAuthHeaders } from '@/lib/auth/worker-client';
 
 export default function WorkerPriorityJobsPage() {
   const [loading, setLoading] = useState(true);
@@ -13,7 +14,10 @@ export default function WorkerPriorityJobsPage() {
   const fetchPriorityJobs = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/worker/incidents');
+      const res = await fetch('/api/worker/incidents', {
+        credentials: 'same-origin',
+        headers: getWorkerAuthHeaders(),
+      });
       if (res.ok) {
         const json = await res.json();
         if (json.success && json.data) {

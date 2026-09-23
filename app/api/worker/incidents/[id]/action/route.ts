@@ -1,6 +1,8 @@
 import { NextRequest } from 'next/server';
 import { getSessionByToken, getUserByEmail } from '@/lib/auth/session';
 import { mockStore } from '@/lib/db/mock-store';
+import { getStorageConfig } from '@/lib/db/storage-config';
+import { createAdminClient } from '@/lib/db/supabase-admin';
 import { createErrorResponse, createSuccessResponse } from '@/lib/utils/api-error';
 import { normalizeDepartmentCode } from '@/lib/constants/departments';
 
@@ -20,6 +22,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const config = getStorageConfig();
     const { id } = await params;
     const token =
       req.cookies.get('civicshield_session')?.value ||
@@ -42,24 +45,34 @@ export async function POST(
       return createErrorResponse('Access Denied: Worker authentication required.', 'UNAUTHORIZED', 401);
     }
 
-    const incident = await mockStore.getIncident(id);
+    let incident: any = null;
+
+    if (config.isMock) {
+      incident = mockStore.getIncident(id);
+    } else {
+      const supabase = createAdminClient();
+      try {
+        const { data: incData } = await supabase
+          .from('incidents')
+          .select('*, departments(id, name, code)')
+          .or(`id.eq.${id},case_id.eq.${id}`)
+          .maybeSingle();
+
+        incident = incData || mockStore.getIncident(id);
+      } catch {
+        incident = mockStore.getIncident(id);
+      }
+    }
+
     if (!incident) {
       return createErrorResponse(`Complaint with ID '${id}' not found.`, 'NOT_FOUND', 404);
     }
 
     // STRICT DEPARTMENT AUTHORIZATION CHECK
     if (!isIncidentAssignedToWorkerDept(incident, user)) {
+      const assignedDept = incident.departmentName || incident.departments?.name || incident.category?.replace(/_/g, ' ') || 'Other';
       return createErrorResponse(
-        `Access Denied: Complaint '${id}' belongs to a different department.`,
-        'FORBIDDEN',
-        403
-      );
-    }
-
-    const assignedWorkerId = incident.assigned_worker_id || incident.assignedWorkerId || incident.assigned_officer_id;
-    if (assignedWorkerId && assignedWorkerId !== user.id && assignedWorkerId !== 'user-worker-road-001' && user.id !== 'user-worker-road-001') {
-      return createErrorResponse(
-        `Access Denied: Complaint '${id}' is assigned to another worker.`,
+        `Access Denied: Complaint '${id}' belongs to ${assignedDept}. Your account is locked to ${user.departmentName || user.departmentCode}.`,
         'FORBIDDEN',
         403
       );
@@ -71,66 +84,121 @@ export async function POST(
     let updatedIncident = null;
     const serverNow = new Date().toISOString();
 
-    if (action === 'ACCEPT') {
-      updatedIncident = await mockStore.updateIncident(incident.id, {
+    if (action === 'ACCEPT' || action === 'START_WORK') {
+      const actionName = action === 'ACCEPT' ? 'WORKER_ACCEPTED_JOB' : 'WORKER_STARTED_WORK';
+      const actionReason = action === 'ACCEPT'
+        ? `Worker ${user.fullName} (${user.departmentName}) accepted the job assignment. Status updated to IN_PROGRESS.`
+        : `Worker ${user.fullName} started field repairs.`;
+
+      if (!config.isMock) {
+        try {
+          const supabase = createAdminClient();
+          const { data } = await supabase
+            .from('incidents')
+            .update({
+              status: 'IN_PROGRESS',
+              updated_at: serverNow,
+            })
+            .eq('id', incident.id)
+            .select()
+            .maybeSingle();
+
+          if (data) updatedIncident = data;
+
+          await supabase.from('audit_logs').insert({
+            incident_id: incident.id,
+            performed_by: user.fullName,
+            action: actionName,
+            reason: actionReason,
+            created_at: serverNow,
+          });
+        } catch (dbErr) {
+          console.error('[Worker Action] Supabase update error:', dbErr);
+        }
+      }
+
+      updatedIncident = updatedIncident || await mockStore.updateIncident(incident.id, {
         status: 'IN_PROGRESS',
         accepted_at: serverNow,
-        acceptedAt: serverNow,
         accepted_by: user.fullName,
-        acceptedBy: user.fullName,
-        changed_by: user.fullName,
-        changedBy: user.fullName,
-        changed_at: serverNow,
-        changedAt: serverNow,
-      });
-      await mockStore.addAuditLog({
-        id: `audit-${Date.now()}-${Math.random().toString(36).substring(7)}`,
-        incident_id: incident.id,
-        performed_by: user.fullName,
-        action: 'WORKER_ACCEPTED_JOB',
-        reason: `Worker ${user.fullName} (${user.departmentName}) accepted the job assignment. Status updated to IN_PROGRESS.`,
-        created_at: serverNow,
-      });
-    } else if (action === 'START_WORK') {
-      updatedIncident = await mockStore.updateIncident(incident.id, {
-        status: 'IN_PROGRESS',
         started_at: serverNow,
         started_by: user.fullName,
+        changed_by: user.fullName,
+        changed_at: serverNow,
       });
+
       await mockStore.addAuditLog({
         id: `audit-${Date.now()}-${Math.random().toString(36).substring(7)}`,
         incident_id: incident.id,
         performed_by: user.fullName,
-        action: 'WORKER_STARTED_WORK',
-        reason: `Worker ${user.fullName} started field repairs.`,
+        action: actionName,
+        reason: actionReason,
         created_at: serverNow,
       });
     } else if (action === 'SUBMIT_EVIDENCE' || action === 'COMPLETE') {
       const existingEv = mockStore.getResolutionEvidence(incident.id);
       const prevAttempts = existingEv?.attempts || [];
       const attemptNum = prevAttempts.length + 1;
+      const proofUrl = afterPhotoUrl || beforePhotoUrl || '/images/officer_command.jpg';
+      const notes = workerNotes || `Work completed by ${user.fullName} (${user.departmentName}).`;
+
       const currentAttempt = {
         attemptNumber: attemptNum,
         submittedAt: serverNow,
-        proofImageUrl: afterPhotoUrl || beforePhotoUrl || '/images/officer_command.jpg',
-        notes: workerNotes || `Work completed by ${user.fullName} (${user.departmentName}).`,
+        proofImageUrl: proofUrl,
+        notes,
         status: 'PENDING',
       };
 
-      const evidence = await mockStore.setResolutionEvidence({
+      if (!config.isMock) {
+        try {
+          const supabase = createAdminClient();
+          const { data } = await supabase
+            .from('incidents')
+            .update({
+              status: 'WAITING_FOR_APPROVAL',
+              updated_at: serverNow,
+            })
+            .eq('id', incident.id)
+            .select()
+            .maybeSingle();
+
+          if (data) updatedIncident = data;
+
+          await supabase
+            .from('resolution_evidence')
+            .upsert({
+              incident_id: incident.id,
+              proof_image_url: proofUrl,
+              resolution_notes: notes,
+              created_at: serverNow,
+            }, { onConflict: 'incident_id' });
+
+          await supabase.from('audit_logs').insert({
+            incident_id: incident.id,
+            performed_by: user.fullName,
+            action: 'WORKER_SUBMITTED_EVIDENCE',
+            reason: `Field evidence submitted by ${user.fullName}. Awaiting Authority Approval.`,
+            created_at: serverNow,
+          });
+        } catch (dbErr) {
+          console.error('[Worker Action] Supabase evidence submission error:', dbErr);
+        }
+      }
+
+      await mockStore.setResolutionEvidence({
         id: existingEv?.id || `ev-${Date.now()}`,
         incident_id: incident.id,
         officer_id: user.id,
-        proof_image_url: afterPhotoUrl || beforePhotoUrl || '/images/officer_command.jpg',
-        resolution_notes: workerNotes || `Work completed by ${user.fullName} (${user.departmentName}).`,
+        proof_image_url: proofUrl,
+        resolution_notes: notes,
         citizen_verified: false,
         status: 'PENDING',
         created_at: serverNow,
         attempts: [...prevAttempts, currentAttempt],
       });
 
-      // Update incident status to WAITING_FOR_APPROVAL (strictly requiring authority approval)
-      updatedIncident = await mockStore.updateIncident(incident.id, {
+      updatedIncident = updatedIncident || await mockStore.updateIncident(incident.id, {
         status: 'WAITING_FOR_APPROVAL',
         evidence_submitted_at: serverNow,
         evidence_submitted_by: user.fullName,
@@ -143,18 +211,46 @@ export async function POST(
         action: 'WORKER_SUBMITTED_EVIDENCE',
         reason: `Field evidence submitted by ${user.fullName}. Awaiting Authority Approval.`,
         new_value: {
-          proof_image_url: evidence.proof_image_url,
-          notes: evidence.resolution_notes,
+          proof_image_url: proofUrl,
+          notes,
           gps: { latitude, longitude },
           timestamp: serverNow,
         },
         created_at: serverNow,
       });
     } else if (action === 'CONTINUE_WORK') {
-      updatedIncident = await mockStore.updateIncident(incident.id, {
+      if (!config.isMock) {
+        try {
+          const supabase = createAdminClient();
+          const { data } = await supabase
+            .from('incidents')
+            .update({
+              status: 'IN_PROGRESS',
+              updated_at: serverNow,
+            })
+            .eq('id', incident.id)
+            .select()
+            .maybeSingle();
+
+          if (data) updatedIncident = data;
+
+          await supabase.from('audit_logs').insert({
+            incident_id: incident.id,
+            performed_by: user.fullName,
+            action: 'WORKER_CONTINUED_WORK',
+            reason: `Worker ${user.fullName} resumed field repairs after evidence feedback.`,
+            created_at: serverNow,
+          });
+        } catch (dbErr) {
+          console.error('[Worker Action] Supabase continue work error:', dbErr);
+        }
+      }
+
+      updatedIncident = updatedIncident || await mockStore.updateIncident(incident.id, {
         status: 'IN_PROGRESS',
         continued_at: serverNow,
       });
+
       await mockStore.addAuditLog({
         id: `audit-${Date.now()}-${Math.random().toString(36).substring(7)}`,
         incident_id: incident.id,
@@ -164,14 +260,26 @@ export async function POST(
         created_at: serverNow,
       });
     } else if (action === 'UPDATE_STATUS' && status) {
-      updatedIncident = await mockStore.updateIncident(incident.id, { status });
+      if (!config.isMock) {
+        try {
+          const supabase = createAdminClient();
+          const { data } = await supabase
+            .from('incidents')
+            .update({ status, updated_at: serverNow })
+            .eq('id', incident.id)
+            .select()
+            .maybeSingle();
+          if (data) updatedIncident = data;
+        } catch {}
+      }
+      updatedIncident = updatedIncident || await mockStore.updateIncident(incident.id, { status });
     } else {
       return createErrorResponse('Invalid action specified.', 'VALIDATION_ERROR', 400);
     }
 
     return createSuccessResponse({
       success: true,
-      message: `Action '${action}' executed successfully on complaint ${incident.caseId || incident.id}.`,
+      message: `Action '${action}' executed successfully on complaint ${incident.case_id || incident.caseId || incident.id}.`,
       incident: updatedIncident || incident,
       worker: {
         id: user.id,

@@ -15,8 +15,8 @@ export class GeminiConfigurationError extends Error {
   }
 }
 
-const PRIMARY_MODEL = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
-const FALLBACK_MODELS = ['gemini-flash-latest', 'gemini-2.5-flash-lite', 'gemini-3.5-flash'];
+const PRIMARY_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+const FALLBACK_MODELS = ['gemini-2.0-flash'];
 
 const CIVIC_SYSTEM_PROMPT = `
 You are an expert Civic Issue Classification AI for municipal governance platforms.
@@ -170,7 +170,7 @@ export async function analyzeCivicIssue(
           },
         });
 
-        // 3.5s strict timeout per candidate model
+        // 3.5s per candidate model timeout
         const response = await Promise.race([
           generatePromise,
           new Promise<never>((_, reject) => setTimeout(() => reject(new Error('AI Model Response Timeout')), 3500)),
@@ -185,9 +185,15 @@ export async function analyzeCivicIssue(
         const errMsg = String(modelErr?.message || modelErr);
         console.warn(`[AI Engine] Model ${modelName} unavailable (${errMsg.slice(0, 120)}).`);
         
-        // If 429 Rate limit / Quota exceeded, break immediately to Smart NLP
-        if (errMsg.includes('429') || errMsg.includes('quota') || errMsg.includes('RESOURCE_EXHAUSTED')) {
-          console.warn('[AI Engine] Quota limit detected. Instantly executing Smart NLP Categorizer.');
+        // If 429 Rate limit / Quota / Timeout, break immediately to Smart NLP
+        if (
+          errMsg.includes('429') || 
+          errMsg.includes('quota') || 
+          errMsg.includes('RESOURCE_EXHAUSTED') ||
+          errMsg.includes('Timeout') ||
+          errMsg.includes('API_KEY_INVALID')
+        ) {
+          console.warn('[AI Engine] Quota/Timeout detected. Instantly executing Smart NLP Categorizer.');
           break;
         }
       }
