@@ -1,0 +1,35 @@
+# CivicShield AI Engine — Requirements
+# FastAPI microservice for 4-tier multi-modal AI pipeline
+# Run with: pip install -r ai_engine/requirements.txt
+# Start with: cd ai_engine && uvicorn app:app --reload --port 8000
+
+# ── Core server ────────────────────────────────────────────────────────────────
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+
+# ── AI / ML models ─────────────────────────────────────────────────────────────
+# YOLOv8 (object detection)
+ultralytics==8.3.56
+
+# CLIP (vision-language model)
+ftfy==6.3.1
+regex==2024.11.6
+
+# Scikit-learn (Random Forest + Isolation Forest)
+scikit-learn==1.6.1
+
+# Scientific computing
+numpy==2.1.3
+scipy==1.15.1
+
+# Image processing
+Pillow==11.1.0
+
+# ── Optional: Accelerate inference on GPU ─────────────────────────────────────
+# torch==2.6.0           # Uncomment if using GPU
+# torchvision==0.21.0    # Uncomment if using GPU
+
+# ── Utilities ──────────────────────────────────────────────────────────────────
+requests==2.32.3
+python-dotenv==1.0.1

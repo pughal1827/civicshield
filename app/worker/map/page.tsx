@@ -5,6 +5,7 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { MapPin, Navigation, ExternalLink, RefreshCw, Eye, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { getWorkerAuthHeaders } from '@/lib/auth/worker-client';
 
 // Dynamically import Leaflet map to prevent SSR issues
 const IncidentClusterMap = dynamic(
@@ -20,7 +21,10 @@ export default function WorkerMapLocationsPage() {
   const fetchWorkerMap = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/worker/incidents');
+      const res = await fetch('/api/worker/incidents', {
+        credentials: 'same-origin',
+        headers: getWorkerAuthHeaders(),
+      });
       if (res.ok) {
         const json = await res.json();
         if (json.success && json.data) {

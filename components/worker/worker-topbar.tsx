@@ -12,6 +12,8 @@ interface WorkerTopbarProps {
   unreadCount?: number;
 }
 
+import { clearStoredWorker } from '@/lib/auth/worker-client';
+
 export function WorkerTopbar({
   workerName = 'Field Worker',
   departmentName = 'Department Operations',
@@ -20,6 +22,7 @@ export function WorkerTopbar({
   const router = useRouter();
 
   const handleSignOut = async () => {
+    clearStoredWorker();
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
     } catch {

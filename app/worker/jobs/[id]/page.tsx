@@ -23,6 +23,7 @@ import {
   Navigation
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { getWorkerAuthHeaders } from '@/lib/auth/worker-client';
 
 interface JobDetailPageProps {
   params: Promise<{ id: string }>;
@@ -50,7 +51,10 @@ export default function WorkerJobDetailPage({ params }: JobDetailPageProps) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/worker/incidents/${id}`);
+      const res = await fetch(`/api/worker/incidents/${id}`, {
+        credentials: 'same-origin',
+        headers: getWorkerAuthHeaders(),
+      });
       const json = await res.json();
 
       if (res.status === 403) {
@@ -88,12 +92,13 @@ export default function WorkerJobDetailPage({ params }: JobDetailPageProps) {
     try {
       const res = await fetch(`/api/worker/incidents/${id}/action`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        headers: getWorkerAuthHeaders(),
         body: JSON.stringify({ action: 'ACCEPT' }),
       });
       const json = await res.json();
       if (json.success) {
-        setActionSuccess('Job accepted successfully! Status updated to ACCEPTED.');
+        setActionSuccess('Job accepted successfully! Status updated to IN PROGRESS.');
         fetchJobDetail();
       } else {
         alert(json.error?.message || 'Failed to accept job.');
@@ -110,7 +115,8 @@ export default function WorkerJobDetailPage({ params }: JobDetailPageProps) {
     try {
       const res = await fetch(`/api/worker/incidents/${id}/action`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        headers: getWorkerAuthHeaders(),
         body: JSON.stringify({ action: 'START_WORK' }),
       });
       const json = await res.json();
@@ -132,7 +138,8 @@ export default function WorkerJobDetailPage({ params }: JobDetailPageProps) {
     try {
       const res = await fetch(`/api/worker/incidents/${id}/action`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        headers: getWorkerAuthHeaders(),
         body: JSON.stringify({ action: 'CONTINUE_WORK' }),
       });
       const json = await res.json();
@@ -172,7 +179,8 @@ export default function WorkerJobDetailPage({ params }: JobDetailPageProps) {
     try {
       const res = await fetch(`/api/worker/incidents/${id}/action`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        headers: getWorkerAuthHeaders(),
         body: JSON.stringify({
           action: 'SUBMIT_EVIDENCE',
           afterPhotoUrl: proofPhotoUrl || '/images/officer_command.jpg',
@@ -225,7 +233,13 @@ export default function WorkerJobDetailPage({ params }: JobDetailPageProps) {
         <div className="p-6 rounded-3xl bg-rose-50 border-2 border-rose-200 text-rose-900 space-y-3">
           <div className="flex items-center gap-2 text-rose-700 font-black text-base">
             <AlertTriangle className="h-6 w-6 text-rose-600" />
-            <span>403 Forbidden — Department Access Denied</span>
+            <span>
+              {error.toLowerCase().includes('not found')
+                ? '404 Not Found — Complaint Not Located'
+                : error.toLowerCase().includes('access denied') || error.toLowerCase().includes('different department')
+                ? '403 Forbidden — Department Access Denied'
+                : 'Complaint Access Error'}
+            </span>
           </div>
           <p className="text-xs font-semibold leading-relaxed text-rose-800">{error}</p>
         </div>

@@ -120,17 +120,31 @@ export async function GET(
       return createErrorResponse('Incident not found.', 'NOT_FOUND', 404);
     }
 
-    // Combine text from citizen reports, title, and summary for high-fidelity AI classification
+    // Combine text from citizen reports, summary, and description
     const combinedText = [
-      incident.title,
-      incident.summary,
       ...reports.map((r: any) => r.raw_description || r.rawDescription || ''),
-      incident.address,
+      incident.summary,
+      incident.description,
+      incident.title,
     ]
       .filter(Boolean)
       .join(' ');
 
     const dynamicAiMatch = smartClassifyComplaint(combinedText);
+
+    const suggestedDeptCode = (
+      aiAnalysis?.suggested_department_code ||
+      aiAnalysis?.recommended_department_code ||
+      dynamicAiMatch.departmentCode ||
+      'ROAD_MAINT'
+    ) as keyof typeof DEPARTMENT_NAMES;
+
+    const imageVerificationData =
+      aiAnalysis?.extracted_features?.imageVerification ||
+      aiAnalysis?.raw_ai_response?.imageVerification ||
+      incident.priority_factors?.imageVerification ||
+      incident.priorityFactors?.imageVerification ||
+      null;
 
     // Build enriched real AI Analysis object
     const finalAiAnalysis = {
@@ -142,12 +156,9 @@ export async function GET(
       category: aiAnalysis?.detected_category || aiAnalysis?.category || dynamicAiMatch.category,
       detected_severity: incident.severity || aiAnalysis?.detected_severity || dynamicAiMatch.severity,
       severity: incident.severity || aiAnalysis?.detected_severity || dynamicAiMatch.severity,
-      suggested_department_code:
-        aiAnalysis?.suggested_department_code ||
-        aiAnalysis?.recommended_department_code ||
-        dynamicAiMatch.departmentCode,
+      suggested_department_code: suggestedDeptCode,
       suggested_department_name:
-        DEPARTMENT_NAMES[dynamicAiMatch.departmentCode] ||
+        DEPARTMENT_NAMES[suggestedDeptCode] ||
         incident.departments?.name ||
         incident.departmentName ||
         'Road Maintenance & Infrastructure',
@@ -160,6 +171,8 @@ export async function GET(
         aiAnalysis?.extracted_features?.keywords && aiAnalysis.extracted_features.keywords.length > 0
           ? aiAnalysis.extracted_features.keywords
           : dynamicAiMatch.extractedKeywords,
+      image_verification: imageVerificationData,
+      imageVerification: imageVerificationData,
       reasoning: dynamicAiMatch.reasoning,
       created_at: aiAnalysis?.created_at || incident.created_at || new Date().toISOString(),
     };
@@ -443,6 +456,56 @@ export async function PATCH(
         }
       } catch (dbErr) {
         return createErrorResponse('Service temporarily unavailable. Database update failed.', 'SERVICE_UNAVAILABLE', 503);
+      }
+    }
+
+    // Check if we need to send a Telegram push notification for citizen verification
+    if (updatePayload.status === 'PENDING_CITIZEN_VERIFICATION' || updatePayload.status === 'RESOLVED') {
+      let chatId = null;
+      let evidenceUrl = null;
+      if (config.isMock) {
+        // Find report for this incident
+        const reps = mockStore.getReportsByIncident(incidentId);
+        if (reps.length > 0 && (reps[0].telegram_chat_id || reps[0].telegramChatId)) {
+          chatId = reps[0].telegram_chat_id || reps[0].telegramChatId;
+        }
+        const ev = mockStore.getResolutionEvidence(incidentId) as any;
+        evidenceUrl = ev?.image_url || ev?.imageUrl;
+      } else {
+        const supabase = createAdminClient();
+        const { data: rep } = await supabase.from('reports').select('telegram_chat_id').eq('incident_id', incidentId).not('telegram_chat_id', 'is', null).limit(1).maybeSingle();
+        if (rep?.telegram_chat_id) {
+          chatId = rep.telegram_chat_id;
+        }
+        const { data: ev } = await supabase.from('resolution_evidence').select('image_url').eq('incident_id', incidentId).maybeSingle();
+        evidenceUrl = ev?.image_url;
+      }
+
+      if (chatId) {
+        try {
+          const { sendTelegramMessage, sendTelegramPhoto } = await import('@/lib/telegram/bot');
+          const text = `🔔 **Issue Update: ${updatedIncident.case_id || updatedIncident.caseId}**\n\nThe municipal authority has repaired this issue and provided evidence. Does this look resolved to you?`;
+          
+          const options = {
+            parse_mode: 'Markdown',
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  { text: '✅ Yes, looks good', callback_data: `verify_${incidentId}` },
+                  { text: '❌ No, still broken', callback_data: `reject_${incidentId}` }
+                ]
+              ]
+            }
+          };
+
+          if (evidenceUrl) {
+            await sendTelegramPhoto(chatId, evidenceUrl, text, options);
+          } else {
+            await sendTelegramMessage(chatId, text, options);
+          }
+        } catch (botErr) {
+          console.error('Failed to send telegram notification:', botErr);
+        }
       }
     }
 

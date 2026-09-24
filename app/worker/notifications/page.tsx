@@ -4,12 +4,16 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Bell, HardHat, CheckCircle2, ArrowRight, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { getWorkerAuthHeaders } from '@/lib/auth/worker-client';
 
 export default function WorkerNotificationsPage() {
   const [workerInfo, setWorkerInfo] = useState<any>(null);
 
   useEffect(() => {
-    fetch('/api/worker/incidents')
+    fetch('/api/worker/incidents', {
+      credentials: 'same-origin',
+      headers: getWorkerAuthHeaders(),
+    })
       .then((res) => res.json())
       .then((json) => {
         if (json.success && json.data) {

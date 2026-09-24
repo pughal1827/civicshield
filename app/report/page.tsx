@@ -174,7 +174,8 @@ export default function ReportIssuePage() {
         if (uploadJson.success && uploadJson.data?.url) {
           finalUploadedImageUrl = uploadJson.data.url;
         } else {
-          throw new Error(uploadJson.error?.message || 'Photo upload failed. Please try again.');
+          setSubmissionError(uploadJson.error?.message || 'Photo upload failed. Please try again.');
+          return;
         }
       }
 
@@ -211,7 +212,11 @@ export default function ReportIssuePage() {
           // Ignore localStorage errors
         }
       } else {
-        throw new Error(json.error?.message || 'Failed to submit report. Please try again.');
+        setSubmissionError(json.error?.message || 'Failed to submit report. Please try again.');
+        if (json.error?.code === 'IMAGE_VALIDATION_ERROR') {
+          setStep(1);
+        }
+        return;
       }
     } catch (err: unknown) {
       console.error('Submission error:', err);
@@ -667,34 +672,74 @@ export default function ReportIssuePage() {
             </p>
           </div>
 
-          {/* Explicit Upload Notice */}
-          <div className="p-3.5 bg-emerald-50/80 border border-emerald-200 rounded-2xl text-xs text-emerald-900 flex items-center gap-2.5 font-bold">
-            <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-            <span>Your photo will be uploaded when you click Submit.</span>
-          </div>
+          {/* Conditional Upload Notice */}
+          {activePhotoPreview ? (
+            <div className="p-3.5 bg-emerald-50/90 border border-emerald-200 rounded-2xl text-xs text-emerald-900 flex items-center gap-2.5 font-bold shadow-xs">
+              <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+              <span>✓ Photo attached — will be securely uploaded and analyzed upon submission.</span>
+            </div>
+          ) : (
+            <div className="p-3.5 bg-slate-100/90 border border-slate-200 rounded-2xl text-xs text-slate-700 flex items-center gap-2.5 font-medium">
+              <Camera className="h-4 w-4 text-slate-500 shrink-0" />
+              <span>No photo attached — submitting text report only.</span>
+            </div>
+          )}
 
           <div className="space-y-3">
             
-            {/* Review: Photo */}
-            <div className="p-4 bg-slate-50/80 rounded-2xl border border-slate-200 space-y-2">
+            {/* Review: Photo Evidence */}
+            <div className="p-4 bg-slate-50/80 rounded-2xl border border-slate-200 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Photo</span>
+                <span className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Photo Evidence</span>
                 <button
                   type="button"
                   disabled={submitting}
                   onClick={() => setStep(1)}
-                  className="text-xs text-emerald-600 hover:underline flex items-center gap-1 font-bold min-h-[36px]"
+                  className="text-xs text-emerald-600 hover:text-emerald-700 hover:underline flex items-center gap-1 font-bold min-h-[36px]"
                 >
                   <Edit2 className="h-3 w-3" />
-                  <span>Edit</span>
+                  <span>{activePhotoPreview ? 'Change Photo' : '+ Attach Photo'}</span>
                 </button>
               </div>
+              
               {activePhotoPreview ? (
-                <div className="relative rounded-xl overflow-hidden h-36 border border-slate-200 max-w-xs shadow-xs">
-                  <img src={activePhotoPreview} alt="Attached Photo Preview" className="w-full h-full object-cover" />
+                <div className="space-y-2">
+                  <div className="relative rounded-2xl overflow-hidden border-2 border-emerald-500/30 bg-slate-950 shadow-sm max-w-sm sm:max-w-md">
+                    <img 
+                      src={activePhotoPreview} 
+                      alt="Attached Incident Evidence" 
+                      className="w-full h-48 sm:h-56 object-cover" 
+                      onError={(e) => {
+                        if (selectedFile) {
+                          const refreshedUrl = URL.createObjectURL(selectedFile);
+                          setPreviewUrl(refreshedUrl);
+                          (e.target as HTMLImageElement).src = refreshedUrl;
+                        }
+                      }}
+                    />
+                    <div className="absolute top-2.5 left-2.5 bg-slate-950/85 backdrop-blur-md px-2.5 py-1 rounded-lg border border-emerald-500/40 text-[10px] text-emerald-300 font-bold flex items-center gap-1.5 shadow-sm">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                      <span>Evidence Photo Ready</span>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-slate-500 font-medium">
+                    {selectedFile ? `File: ${selectedFile.name} (${(selectedFile.size / 1024).toFixed(1)} KB)` : 'Photo captured & ready'}
+                  </p>
                 </div>
               ) : (
-                <p className="text-xs text-slate-400 italic font-medium">No photo attached (Optional).</p>
+                <div className="p-4 bg-white rounded-xl border border-dashed border-slate-300 text-center space-y-2">
+                  <p className="text-xs text-slate-500 italic font-medium">No photo attached (Optional).</p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setStep(1)}
+                    className="text-xs border-slate-300 text-slate-700 bg-white hover:bg-slate-50 rounded-xl font-bold"
+                  >
+                    <Camera className="h-3.5 w-3.5 mr-1.5 text-emerald-600" />
+                    Attach a Photo
+                  </Button>
+                </div>
               )}
             </div>
 

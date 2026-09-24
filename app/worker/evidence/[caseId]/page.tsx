@@ -20,6 +20,7 @@ import {
   ImageOff
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { getWorkerAuthHeaders } from '@/lib/auth/worker-client';
 
 interface WorkerEvidenceDetailPageProps {
   params: Promise<{ caseId: string }>;
@@ -39,7 +40,10 @@ export default function WorkerEvidenceDetailPage({ params }: WorkerEvidenceDetai
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/worker/incidents/${caseIdParam}`);
+      const res = await fetch(`/api/worker/incidents/${caseIdParam}`, {
+        credentials: 'same-origin',
+        headers: getWorkerAuthHeaders(),
+      });
       const json = await res.json();
 
       if (res.status === 403) {

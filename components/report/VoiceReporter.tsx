@@ -188,7 +188,10 @@ export function VoiceReporter({
       return;
     }
 
-    // 1. Request microphone access for audio level visualizer & early permission check
+    // 1. (Disabled) Request microphone access for audio level visualizer & early permission check
+    // This manual getUserMedia call can sometimes lock the microphone hardware and cause 
+    // a 'network' or 'audio-capture' error when SpeechRecognition tries to start.
+    /*
     try {
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -212,6 +215,7 @@ export function VoiceReporter({
         return;
       }
     }
+    */
 
     // 2. Initialize native Web Speech API instance
     try {

@@ -68,7 +68,7 @@ export function AuthorityNavbar() {
           setUnreadNotificationsCount(count);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const handleLogout = async () => {
@@ -151,11 +151,10 @@ export function AuthorityNavbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`relative flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                  isActive
-                    ? 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 shadow-sm shadow-cyan-500/10'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-900'
-                }`}
+                className={`relative flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${isActive
+                  ? 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 shadow-sm shadow-cyan-500/10'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-900'
+                  }`}
               >
                 <Icon className={`h-4 w-4 ${isActive ? 'text-cyan-400' : 'text-slate-400'}`} />
                 <span>{link.name}</span>
@@ -228,11 +227,10 @@ export function AuthorityNavbar() {
                   key={link.href}
                   href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-2 p-2.5 rounded-lg text-xs font-semibold ${
-                    isActive
-                      ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
-                      : 'text-slate-300 bg-slate-900/60 hover:bg-slate-900'
-                  }`}
+                  className={`flex items-center gap-2 p-2.5 rounded-lg text-xs font-semibold ${isActive
+                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
+                    : 'text-slate-300 bg-slate-900/60 hover:bg-slate-900'
+                    }`}
                 >
                   <Icon className={`h-4 w-4 ${isActive ? 'text-cyan-400' : 'text-slate-400'}`} />
                   <span>{link.name}</span>

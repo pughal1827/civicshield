@@ -20,6 +20,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { setStoredWorker } from '@/lib/auth/worker-client';
 
 export default function DepartmentWorkerLoginPage() {
   const router = useRouter();
@@ -111,6 +112,7 @@ export default function DepartmentWorkerLoginPage() {
         if (json.data.user?.role === 'CITIZEN') {
           setError('Access Denied: Citizen accounts cannot access the Department Worker Portal.');
         } else {
+          setStoredWorker(json.data.user, json.data.token);
           router.push('/worker/dashboard');
           router.refresh();
         }
